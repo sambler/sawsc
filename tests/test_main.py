@@ -115,12 +115,10 @@ class test_Sawsc(unittest.TestCase):
 class test_Sawsc_osx(test_Sawsc):
     @patch('sys.platform', 'osx')
     def setUp(self):
-        self.app = sawsc.SawscApp()
-        self.app.title('Sawsc test')
+        super().setUp()
 
 @patch('sys.platform', 'windows')
 class test_Sawsc_windows(test_Sawsc):
     @patch('sys.platform', 'windows')
     def setUp(self):
-        self.app = sawsc.SawscApp()
-        self.app.title('Sawsc test')
+        super().setUp()
