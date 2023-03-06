@@ -26,5 +26,5 @@ firefox htmlcov/index.html
 install into home bin
 
 ```sh
-python setup.py develop --install-dir=~/bin/pymodules
+python -m pip install -e .
 ```
