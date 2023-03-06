@@ -46,7 +46,8 @@ EXTRAS = {
 EXT_MODULES = [] #cythonize('module/*.py')
 
 ENTRY_POINTS = {
-#    'console_scripts': ['my_cmd = module.cmd:main'],
+    'console_scripts': ['sawscui = sawsc.gui:main',
+                        'sawsc = sawsc.cmd:main',],
 }
 
 # The rest you shouldn't have to touch too much :)

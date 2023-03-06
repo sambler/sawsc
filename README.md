@@ -3,9 +3,8 @@ This is **SawsC**
 
 Pronounced "Saucy"
 
-SawsC is Shane's AWS Configurator, which is a collection of tkinter classes that use boto3 to build a GUI based assistant for developing and maintaining AWS resources.
+SawsC is Shane's AWS Configurator, which is a tkinter GUI that uses boto3 to assist developing and maintaining AWS resources.
 
-Each component is a subclass of ttk.Frame, it holds the settings available for its resource, adjusts the settings based on choice of development or production and knows how to query, create and update the designated resource.
 
 
 
