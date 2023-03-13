@@ -40,10 +40,6 @@ import tkinter.messagebox as mb
 DEBUG = True
 TOOL_WIDTH = 5
 
-class SawscVPC(tk.Canvas):
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
-
 
 class ScrollableFrame(ttk.Frame):
     """
@@ -54,24 +50,38 @@ class ScrollableFrame(ttk.Frame):
         super().__init__(par, **kwargs)
         # setup scrollable area
         self._canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._canvas.yview)
-        self._scrollable_frame = ttk.Frame(self._canvas)
+        scrollbar_y = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._canvas.yview)
+        scrollbar_x = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._canvas.xview)
+        self._scrollable_frame = ttk.Frame(self._canvas, width=300, height=300)
 
         self._scrollable_frame.bind('<Configure>',
                 lambda e: self._canvas.configure(
                     scrollregion=self._canvas.bbox(tk.ALL)))
 
         self._canvas.create_window((0,0), window=self._scrollable_frame, anchor=tk.NW)
-        self._canvas.configure(yscrollcommand=scrollbar.set)
-        self._canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self._canvas.configure(yscrollcommand=scrollbar_y.set)
+        self._canvas.configure(xscrollcommand=scrollbar_x.set)
+        self._canvas.grid(row=0, column=0, sticky=tk.NSEW)
+
+        scrollbar_y.grid(row=0, column=1, sticky=tk.NS)
+        scrollbar_x.grid(row=1, column=0, sticky=tk.EW)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
+        self._canvas.update_idletasks()
 
         self.bind('<Enter>', self._bindwheel)
         self.bind('<Leave>', self._unbindwheel)
 
-    def add_to_list(self, frame_cls):
-        ni = frame_cls(self._scrollable_frame)
-        ni.pack(fill=tk.X)
+    def canvasx(self, inx):
+        return self._canvas.canvasx(inx)
+
+    def canvasy(self, iny):
+        return self._canvas.canvasy(iny)
+
+    def add_to(self, item_cls, pos):
+        ni = item_cls(self._scrollable_frame)
+        ni.place(x=pos[0], y=pos[1], anchor=tk.NW)
         return ni # return obj so we can keep a reference
 
     def _bindwheel(self, event=None):
@@ -120,21 +130,136 @@ class SawscOptions(tk.Toplevel):
         self.master.show_develop()
 
 
+class SawscRsrc(tk.Canvas):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.dragging = True
+        self.config(width=80, height=80, bg=None)
+        self.fill_colour = 'blue'
+        self.border_colour = 'DarkBlue'
+
+    # adapted from https://stackoverflow.com/a/61162928/2684771
+    def _draw(self):
+
+        ratioMultiplier = 1
+        ratioDividend = 2
+
+        x = [0, int(self.cget('width')), int(self.cget('width')), 0]
+        y = [0, 0, int(self.cget('height')), int(self.cget('height'))]
+        # Array to store the points
+        points = []
+
+        # Iterate over the x points
+        for i in range(len(x)):
+            # Set vertex
+            points.append(x[i])
+            points.append(y[i])
+
+            # If it's not the last point
+            if i != (len(x) - 1):
+                # Insert submultiples points. The more the sharpness, the more these points will be
+                # closer to the vertex.
+                points.append((ratioMultiplier*x[i] + x[i + 1])/ratioDividend)
+                points.append((ratioMultiplier*y[i] + y[i + 1])/ratioDividend)
+                points.append((ratioMultiplier*x[i + 1] + x[i])/ratioDividend)
+                points.append((ratioMultiplier*y[i + 1] + y[i])/ratioDividend)
+            else:
+                # Insert submultiples points.
+                points.append((ratioMultiplier*x[i] + x[0])/ratioDividend)
+                points.append((ratioMultiplier*y[i] + y[0])/ratioDividend)
+                points.append((ratioMultiplier*x[0] + x[i])/ratioDividend)
+                points.append((ratioMultiplier*y[0] + y[i])/ratioDividend)
+                # Close the polygon
+                points.append(x[0])
+                points.append(y[0])
+
+        self.create_polygon(points, smooth=True, fill=self.fill_colour)
+
+
+class SawscRegion(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#99ccff'
+        self._draw()
+
+
+class SawscVPC(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#ffffcc'
+        self._draw()
+
+
+class SawscNet(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#ccccff'
+        self._draw()
+
+
+class SawscEC2(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#33cc33'
+        self._draw()
+
+
+class SawscRDS(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#ff9933'
+        self._draw()
+
+
+class SawscAPI(SawscRsrc):
+    def __init__(self, par, **kwargs):
+        super().__init__(par)
+        self.fill_colour='#ff99ff'
+        self._draw()
+
+
 class SawscPalette(ttk.Frame):
     def __init__(self, par, **kwargs):
         super().__init__(par, **kwargs)
-        l = ttk.Button(self, text='Rgn', width=TOOL_WIDTH)
-        l.grid(row=0, column=0)
-        l = ttk.Button(self, text='Vpc', width=TOOL_WIDTH)
-        l.grid(row=0, column=1)
-        l = ttk.Button(self, text='Net', width=TOOL_WIDTH)
-        l.grid(row=1, column=0)
-        l = ttk.Button(self, text='EC2', width=TOOL_WIDTH)
-        l.grid(row=1, column=1)
-        l = ttk.Button(self, text='RDS', width=TOOL_WIDTH)
-        l.grid(row=2, column=0)
-        l = ttk.Button(self, text='API', width=TOOL_WIDTH)
-        l.grid(row=2, column=1)
+        self._drag_item = None
+        self.palette_button(0, 0, 'Rgn', SawscRegion)
+        self.palette_button(0, 1, 'Vpc', SawscVPC)
+        self.palette_button(1, 0, 'Net', SawscNet)
+        self.palette_button(1, 1, 'EC2', SawscEC2)
+        self.palette_button(2, 0, 'RDS', SawscRDS)
+        self.palette_button(2, 1, 'API', SawscAPI)
+
+    def palette_button(self, row, col, text, cls):
+        b = ttk.Button(self, text=text, width=TOOL_WIDTH)
+        b.item_class = cls
+        b.grid(row=row, column=col)
+        b.bind('<Button-1>', self.drag_start)
+        b.bind('<B1-Motion>', self.drag_motion)
+        b.bind('<ButtonRelease-1>', self.drag_end)
+        return b
+
+    def drag_start(self, evnt):
+        if self._drag_item is None:
+            self._drag_item = evnt.widget.item_class(self.master.display)
+            self._drag_item.xadj = self.master.display.winfo_rootx() - evnt.widget.winfo_rootx()
+            self._drag_item.yadj = self.master.display.winfo_rooty() - evnt.widget.winfo_rooty()
+            xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
+            ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
+            self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
+            self.save_cursor = evnt.widget['cursor'] or ''
+            evnt.widget['cursor'] = 'hand1'
+
+    def drag_motion(self, evnt):
+        if self._drag_item is not None:
+            xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
+            ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
+            self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
+
+    def drag_end(self, evnt):
+        if self._drag_item is not None:
+            evnt.widget['cursor'] = self.save_cursor
+            self._drag_item = None
+
 
 class SawscGUI(tk.Tk):
     def __init__(self):
@@ -214,10 +339,7 @@ class SawscGUI(tk.Tk):
 
 def main(args=None):
     global DEBUG
-    if len(sys.argv) > 1 and (sys.argv[1] == '-d' or sys.argv[1] == '--debug'):
-        DEBUG = True
-    else:
-        DEBUG = False
+    DEBUG = ('-d' in sys.argv) or ('--debug' in sys.argv)
     mw = SawscGUI()
     sys.exit(mw.main(sys.argv))
 
