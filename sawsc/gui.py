@@ -81,11 +81,16 @@ class ScrollableFrame(ttk.Frame):
     def canvasy(self, iny):
         return self._canvas.canvasy(iny)
 
-    def refresh_size(self, tgt_width=99999, tgt_height=99999):
-        # only scan slaves if we are smaller than desired
-        if int(self._scrollable_frame.cget('width')) > tgt_width or \
-                int(self._scrollable_frame.cget('height')) > tgt_height:
-            return
+    def fit_to(self, tgt_width, tgt_height):
+        # only grow to target - refresh to shrink
+        cur_width = int(self._scrollable_frame.cget('width'))
+        cur_height = int(self._scrollable_frame.cget('height'))
+        self._scrollable_frame.configure(width=max(cur_width, tgt_width),
+                                    height=max(cur_height, tgt_height))
+
+    def refresh_size(self):
+        # ensure all slaves fit
+        # TODO shift negative positions into view
         new_width = 0
         new_height = 0
         for i in self._scrollable_frame.place_slaves():
@@ -295,7 +300,7 @@ class SawscPalette(ttk.Frame):
             xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
             ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
             self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
-            self.master.display.refresh_size(xpos+self._drag_item.s_width, ypos+self._drag_item.s_height)
+            self.master.display.fit_to(xpos+self._drag_item.s_width, ypos+self._drag_item.s_height)
 
     def drag_end(self, evnt):
         if self._drag_item is not None:
