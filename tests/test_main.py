@@ -34,6 +34,7 @@ import asyncio
 import os
 import sys
 import logging
+import tkinter as tk
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -55,65 +56,90 @@ log.addHandler(stream_handler)
 #@patch('sys.platform', 'freebsd') # force testing non osx/win on osx/win platforms
 class test_Sawsc(unittest.TestCase):
     async def _start_app(self):
-        self.app.main()
+        return self.app.main()
 
     #@patch('sys.platform', 'freebsd') # why does a class patch not affect SawscGUI.__init__ ?
     def setUp(self):
         self.app = gui.SawscGUI()
         self.app.title('Sawsc test')
+        self.pump_events()
         # running mainloop appears to make no difference to tests
-        loop = asyncio.get_event_loop()
-        loop.create_task(self._start_app())
+        asyncio.get_event_loop().create_task(self._start_app())
 
     def tearDown(self):
         try:
-            sawsc.APP_WIN = None
             self.app.destroy()
         except:
             # testing quit destroys before this call
             pass
 
+    def pump_events(self):
+        while self.app.dooneevent(tk._tkinter.ALL_EVENTS|tk._tkinter.DONT_WAIT):
+            pass
+
     def test_01_start(self):
         title = self.app.winfo_toplevel().title()
         self.assertEqual(title, 'Sawsc test')
+        self.assertTrue(self.app.winfo_viewable())
 
     def test_02_production(self):
+        self.assertTrue(self.app.develop.get())
         self.app.menu_preferences()
         for w in self.app.winfo_children():
             if hasattr(w, 'dev_opt'):
                 w.dev_opt.invoke()
+                self.pump_events()
+        self.assertFalse(self.app.develop.get())
+        # coverage says the code is run but develop_notice is still None
+        # visually you can see the red text so it does exist
+        #self.assertIsNotNone(self.app.develop_notice)
+        #self.assertTrue(self.app.develop_notice.winfo_viewable())
 
     def test_03_bindmousewheel(self):
-        self.app.display._bindwheel()
-        self.app.display._unbindwheel()
-        # TODO no error in calls, how do I verify the bind and unbind?
+        # override for osx/win - get mousewheel events
+        bindlist = self.app.display.bind()
+        self.assertTrue('<Leave>' in bindlist and '<Enter>' in bindlist)
+        self.app.display.event_generate('<Enter>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertTrue('<Button-4>' in bindlist and '<Button-5>' in bindlist)
+        self.app.display.event_generate('<Leave>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertFalse('<Button-4>' in bindlist and '<Button-5>' in bindlist)
 
     def test_04_mousewheel_num(self):
+        # TODO can we verify that the contents scrolled?
         evnt = MagicMock(name='mousewheel')
         evnt.num = 4
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         evnt.num = 5
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         # horiz scroll
         evnt.state = 24
         evnt.num = 4
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         evnt.num = 5
         self.app.display._on_mousewheel(evnt)
-        # TODO can we verify that the contents scrolled?
+        self.pump_events()
 
     def test_05_mousewheel_delta(self):
         evnt = MagicMock(name='mousewheel')
         evnt.delta = 120
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         evnt.delta = -120
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         # horiz scroll
         evnt.state = 24
         evnt.delta = 120
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
         evnt.delta = -120
         self.app.display._on_mousewheel(evnt)
+        self.pump_events()
 
     # about box displays but requires user input to close - rename to test
     def no_test_98_about_me(self):
@@ -130,8 +156,28 @@ class test_Sawsc_osx(test_Sawsc):
     def setUp(self):
         super().setUp()
 
+    def test_03_bindmousewheel(self):
+        bindlist = self.app.display.bind()
+        self.assertTrue('<Leave>' in bindlist and '<Enter>' in bindlist)
+        self.app.display.event_generate('<Enter>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertTrue('<MouseWheel>' in bindlist)
+        self.app.display.event_generate('<Leave>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertFalse('<MouseWheel>' in bindlist)
+
 @patch('sys.platform', 'windows')
 class test_Sawsc_windows(test_Sawsc):
     @patch('sys.platform', 'windows')
     def setUp(self):
         super().setUp()
+
+    def test_03_bindmousewheel(self):
+        bindlist = self.app.display.bind()
+        self.assertTrue('<Leave>' in bindlist and '<Enter>' in bindlist)
+        self.app.display.event_generate('<Enter>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertTrue('<MouseWheel>' in bindlist)
+        self.app.display.event_generate('<Leave>')
+        bindlist = self.app.display._canvas.bind_all()
+        self.assertFalse('<MouseWheel>' in bindlist)
