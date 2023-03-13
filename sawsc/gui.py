@@ -48,11 +48,13 @@ class ScrollableFrame(ttk.Frame):
     """
     def __init__(self, par, **kwargs):
         super().__init__(par, **kwargs)
+        self.scrollspeed = tk.IntVar()
+        self.scrollspeed.set(6) # osx==1 ??
         # setup scrollable area
         self._canvas = tk.Canvas(self)
         scrollbar_y = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._canvas.yview)
         scrollbar_x = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._canvas.xview)
-        self._scrollable_frame = ttk.Frame(self._canvas, width=300, height=300)
+        self._scrollable_frame = ttk.Frame(self._canvas, width=600, height=600)
 
         self._scrollable_frame.bind('<Configure>',
                 lambda e: self._canvas.configure(
@@ -99,10 +101,18 @@ class ScrollableFrame(ttk.Frame):
             self._canvas.unbind_all('<Button-5>')
 
     def _on_mousewheel(self, event=None):
+        # mouse scrollwheel scrolls view
+        # hold Alt to scroll horiz
         if event.num == 4 or event.delta == 120:
-            self._canvas.yview_scroll(int(-2-(1/self.master.scrollspeed.get())), 'units')
+            if event.state == 24:
+                self._canvas.xview_scroll(int(-2-(1/self.scrollspeed.get())), 'units')
+            else:
+                self._canvas.yview_scroll(int(-2-(1/self.scrollspeed.get())), 'units')
         elif event.num == 5 or event.delta == -120:
-            self._canvas.yview_scroll(int(2+(1/self.master.scrollspeed.get())), 'units')
+            if event.state == 24:
+                self._canvas.xview_scroll(int(2+(1/self.scrollspeed.get())), 'units')
+            else:
+                self._canvas.yview_scroll(int(2+(1/self.scrollspeed.get())), 'units')
 
 
 class SawscOptions(tk.Toplevel):
