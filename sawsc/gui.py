@@ -81,6 +81,9 @@ class ScrollableFrame(ttk.Frame):
     def canvasy(self, iny):
         return self._canvas.canvasy(iny)
 
+    def parent_widget(self):
+        return self._scrollable_frame
+
     def add_to(self, item_cls, pos):
         ni = item_cls(self._scrollable_frame)
         ni.place(x=pos[0], y=pos[1], anchor=tk.NW)
@@ -250,7 +253,7 @@ class SawscPalette(ttk.Frame):
 
     def drag_start(self, evnt):
         if self._drag_item is None:
-            self._drag_item = evnt.widget.item_class(self.master.display)
+            self._drag_item = evnt.widget.item_class(self.master.display.parent_widget())
             self._drag_item.xadj = self.master.display.winfo_rootx() - evnt.widget.winfo_rootx()
             self._drag_item.yadj = self.master.display.winfo_rooty() - evnt.widget.winfo_rooty()
             xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
