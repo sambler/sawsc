@@ -54,7 +54,7 @@ class ScrollableFrame(ttk.Frame):
         self._canvas = tk.Canvas(self)
         scrollbar_y = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._canvas.yview)
         scrollbar_x = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._canvas.xview)
-        self._scrollable_frame = ttk.Frame(self._canvas, width=600, height=600)
+        self._scrollable_frame = ttk.Frame(self._canvas, width=300, height=300)
 
         self._scrollable_frame.bind('<Configure>',
                 lambda e: self._canvas.configure(
@@ -80,6 +80,31 @@ class ScrollableFrame(ttk.Frame):
 
     def canvasy(self, iny):
         return self._canvas.canvasy(iny)
+
+    def refresh_size(self, tgt_width=99999, tgt_height=99999):
+        # only scan slaves if we are smaller than desired
+        if int(self._scrollable_frame.cget('width')) > tgt_width or \
+                int(self._scrollable_frame.cget('height')) > tgt_height:
+            return
+        new_width = 0
+        new_height = 0
+        for i in self._scrollable_frame.place_slaves():
+            pi = i.place_info()
+            x = pi['x']
+            if x == '': x = 0
+            else: x = int(x)
+            w = i.s_width
+            if w == '': w = x
+            else: w = int(w) + x
+            new_width = max(new_width, w)
+            y = pi['y']
+            if y == '': y = 0
+            else: y = int(y)
+            h = i.s_height
+            if h =='': h = y
+            else: h = int(h) + y
+            new_height = max(new_height, h)
+        self._scrollable_frame.configure(width=new_width, height=new_height)
 
     def parent_widget(self):
         return self._scrollable_frame
@@ -148,6 +173,9 @@ class SawscRsrc(tk.Canvas):
         super().__init__(par)
         self.dragging = True
         self.config(width=80, height=80, bg=None)
+        # can't get tk to update size
+        self.s_width = 80
+        self.s_height = 80
         self.fill_colour = 'blue'
         self.border_colour = 'DarkBlue'
 
@@ -267,10 +295,12 @@ class SawscPalette(ttk.Frame):
             xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
             ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
             self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
+            self.master.display.refresh_size(xpos+self._drag_item.s_width, ypos+self._drag_item.s_height)
 
     def drag_end(self, evnt):
         if self._drag_item is not None:
             evnt.widget['cursor'] = self.save_cursor
+            self.master.display.refresh_size()
             self._drag_item = None
 
 
