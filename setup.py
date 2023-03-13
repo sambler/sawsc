@@ -27,6 +27,7 @@ VERSION = '0.1.0'
 REQUIRED = [
     #'cython',
     'tkinter',
+    'boto3',
 ]
 
 # packages used during tests

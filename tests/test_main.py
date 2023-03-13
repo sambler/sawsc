@@ -38,6 +38,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import sawsc
+from sawsc import gui
 
 # enable logging to simplify debugging
 log = logging.getLogger('sawsc_testing_log')
@@ -53,17 +54,16 @@ log.addHandler(stream_handler)
 
 #@patch('sys.platform', 'freebsd') # force testing non osx/win on osx/win platforms
 class test_Sawsc(unittest.TestCase):
-    #async def _start_app(self):
-    #    self.app.mainloop()
+    async def _start_app(self):
+        self.app.main()
 
-    #@patch('sys.platform', 'freebsd') # why does a class patch not affect SawscApp.__init__ ?
+    #@patch('sys.platform', 'freebsd') # why does a class patch not affect SawscGUI.__init__ ?
     def setUp(self):
-        self.app = sawsc.SawscApp()
+        self.app = gui.SawscGUI()
         self.app.title('Sawsc test')
-        # using loop gives warning on 3.10/3.11
         # running mainloop appears to make no difference to tests
-        #loop = asyncio.get_event_loop()
-        #loop.create_task(self._start_app())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._start_app())
 
     def tearDown(self):
         try:
@@ -77,30 +77,43 @@ class test_Sawsc(unittest.TestCase):
         title = self.app.winfo_toplevel().title()
         self.assertEqual(title, 'Sawsc test')
 
-    def test_02_bindmousewheel(self):
-        self.app._list._bindwheel()
-        self.app._list._unbindwheel()
-        # TODO no error in calls, how do I verify the bind and unbind?
-
-    def test_03_mousewheel_num(self):
-        evnt = MagicMock(name='mousewheel')
-        evnt.num = 4
-        self.app._list._on_mousewheel(evnt)
-        evnt.num = 5
-        self.app._list._on_mousewheel(evnt)
-        # TODO can we verify that the contents scrolled?
-
-    def test_04_mousewheel_delta(self):
-        evnt = MagicMock(name='mousewheel')
-        evnt.delta = 120
-        self.app._list._on_mousewheel(evnt)
-        evnt.delta = -120
-        self.app._list._on_mousewheel(evnt)
-
-    def test_05_production(self):
-        for w in self.app._list._scrollable_frame.winfo_children():
+    def test_02_production(self):
+        self.app.menu_preferences()
+        for w in self.app.winfo_children():
             if hasattr(w, 'dev_opt'):
                 w.dev_opt.invoke()
+
+    def test_03_bindmousewheel(self):
+        self.app.display._bindwheel()
+        self.app.display._unbindwheel()
+        # TODO no error in calls, how do I verify the bind and unbind?
+
+    def test_04_mousewheel_num(self):
+        evnt = MagicMock(name='mousewheel')
+        evnt.num = 4
+        self.app.display._on_mousewheel(evnt)
+        evnt.num = 5
+        self.app.display._on_mousewheel(evnt)
+        # horiz scroll
+        evnt.state = 24
+        evnt.num = 4
+        self.app.display._on_mousewheel(evnt)
+        evnt.num = 5
+        self.app.display._on_mousewheel(evnt)
+        # TODO can we verify that the contents scrolled?
+
+    def test_05_mousewheel_delta(self):
+        evnt = MagicMock(name='mousewheel')
+        evnt.delta = 120
+        self.app.display._on_mousewheel(evnt)
+        evnt.delta = -120
+        self.app.display._on_mousewheel(evnt)
+        # horiz scroll
+        evnt.state = 24
+        evnt.delta = 120
+        self.app.display._on_mousewheel(evnt)
+        evnt.delta = -120
+        self.app.display._on_mousewheel(evnt)
 
     # about box displays but requires user input to close - rename to test
     def no_test_98_about_me(self):
