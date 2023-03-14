@@ -371,15 +371,16 @@ class SawscGUI(tk.Tk):
         pass
 
     def show_develop(self, evnt=None):
-        if self.develop_notice is None:
-            if self.develop.get():
+        if self.develop.get():
+            if self.develop_notice is None:
                 self.develop_notice = ttk.Label(self, text='DEVELOPMENT',
                         font=('Dejavu Sans', 12, 'bold'), foreground='red')
-                self.develop_notice.place(x=-17, y=1, relx=1, anchor=tk.NE)
-                self.develop_notice.lift()
+            self.develop_notice.place(x=-17, y=1, relx=1, anchor=tk.NE)
+            self.develop_notice.lift()
         else:
-            self.develop_notice.destroy()
-            self.develop_notice = None
+            if self.develop_notice is not None:
+                self.develop_notice.destroy()
+                self.develop_notice = None
 
     def main(self, args=None):
         return self.mainloop()
