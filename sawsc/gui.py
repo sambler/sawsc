@@ -31,124 +31,108 @@
 #
 
 
+import boto3
+import json
+import os
 import sawsc
 import sys
 import tkinter as tk
-from tkinter import ttk
-import tkinter.messagebox as mb
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from ttkbootstrap.dialogs import Messagebox as mb
+from ttkbootstrap.scrolled import ScrolledFrame
+from ttkbootstrap.tableview import Tableview
+from ttkbootstrap import toast
+from ttkbootstrap.tooltip import ToolTip
+#from ttkbootstrap import validator, add_validation
 
-DEBUG = True
-TOOL_WIDTH = 5
+PADDING = 5
 
+Opts = None # created in gui init()
 
-class ScrollableFrame(ttk.Frame):
-    """
-    Scrollable Frame, to hold a scrollable list of frames
-    call add_to_list(myframe) to add your custom frames to this list
-    """
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
-        self.scrollspeed = tk.IntVar()
-        self.scrollspeed.set(6) # osx==1 ??
-        # setup scrollable area
-        self._canvas = tk.Canvas(self)
-        scrollbar_y = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._canvas.yview)
-        scrollbar_x = ttk.Scrollbar(self, orient=tk.HORIZONTAL, command=self._canvas.xview)
-        self._scrollable_frame = ttk.Frame(self._canvas, width=300, height=300)
-
-        self._scrollable_frame.bind('<Configure>',
-                lambda e: self._canvas.configure(
-                    scrollregion=self._canvas.bbox(tk.ALL)))
-
-        self._canvas.create_window((0,0), window=self._scrollable_frame, anchor=tk.NW)
-        self._canvas.configure(yscrollcommand=scrollbar_y.set)
-        self._canvas.configure(xscrollcommand=scrollbar_x.set)
-        self._canvas.grid(row=0, column=0, sticky=tk.NSEW)
-
-        scrollbar_y.grid(row=0, column=1, sticky=tk.NS)
-        scrollbar_x.grid(row=1, column=0, sticky=tk.EW)
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-        self._canvas.update_idletasks()
-
-        self.bind('<Enter>', self._bindwheel)
-        self.bind('<Leave>', self._unbindwheel)
-
-    def canvasx(self, inx):
-        return self._canvas.canvasx(inx)
-
-    def canvasy(self, iny):
-        return self._canvas.canvasy(iny)
-
-    def fit_to(self, tgt_width, tgt_height):
-        # only grow to target - refresh to shrink
-        cur_width = int(self._scrollable_frame.cget('width'))
-        cur_height = int(self._scrollable_frame.cget('height'))
-        self._scrollable_frame.configure(width=max(cur_width, tgt_width),
-                                    height=max(cur_height, tgt_height))
-
-    def refresh_size(self):
-        # ensure all slaves fit
-        # TODO shift negative positions into view
-        new_width = 0
-        new_height = 0
-        for i in self._scrollable_frame.place_slaves():
-            pi = i.place_info()
-            x = pi['x']
-            if x == '': x = 0
-            else: x = int(x)
-            w = i.s_width
-            if w == '': w = x
-            else: w = int(w) + x
-            new_width = max(new_width, w)
-            y = pi['y']
-            if y == '': y = 0
-            else: y = int(y)
-            h = i.s_height
-            if h =='': h = y
-            else: h = int(h) + y
-            new_height = max(new_height, h)
-        self._scrollable_frame.configure(width=new_width, height=new_height)
-
-    def parent_widget(self):
-        return self._scrollable_frame
-
-    def add_to(self, item_cls, pos):
-        ni = item_cls(self._scrollable_frame)
-        ni.place(x=pos[0], y=pos[1], anchor=tk.NW)
-        return ni # return obj so we can keep a reference
-
-    def _bindwheel(self, event=None):
-        if sys.platform.startswith('osx') or sys.platform.startswith('win'):
-            self._canvas.bind_all('<MouseWheel>', self._on_mousewheel)
-        else:
-            self._canvas.bind_all('<Button-4>', self._on_mousewheel)
-            self._canvas.bind_all('<Button-5>', self._on_mousewheel)
-
-    def _unbindwheel(self, event=None):
-        if sys.platform.startswith('osx') or sys.platform.startswith('win'):
-            self._canvas.unbind_all('<MouseWheel>')
-        else:
-            self._canvas.unbind_all('<Button-4>')
-            self._canvas.unbind_all('<Button-5>')
-
-    def _on_mousewheel(self, event=None):
-        # mouse scrollwheel scrolls view
-        # hold Alt to scroll horiz
-        if event.num == 4 or event.delta == 120:
-            if event.state == 24:
-                self._canvas.xview_scroll(int(-2-(1/self.scrollspeed.get())), 'units')
-            else:
-                self._canvas.yview_scroll(int(-2-(1/self.scrollspeed.get())), 'units')
-        elif event.num == 5 or event.delta == -120:
-            if event.state == 24:
-                self._canvas.xview_scroll(int(2+(1/self.scrollspeed.get())), 'units')
-            else:
-                self._canvas.yview_scroll(int(2+(1/self.scrollspeed.get())), 'units')
+# service as class_name: display_name
+KNOWN_SERVICES = {
+    'AWSvpc': 'VPC',
+    'AWSec2': 'EC2',
+    'AWSs3': 'S3',
+    }
 
 
-class SawscOptions(tk.Toplevel):
+class AWSvpc(ttk.Frame):
+    def __init__(self, par):
+        super().__init__(par)
+        l = ttk.Label(self, text=' VPC data here')
+        l.grid(row=0, column=0)
+
+
+class AWSec2(ttk.Frame):
+    def __init__(self, par):
+        super().__init__(par)
+        l = ttk.Label(self, text=' EC2 data here')
+        l.grid(row=0, column=0)
+
+
+class AWSs3(ttk.Frame):
+    def __init__(self, par):
+        super().__init__(par)
+        l = ttk.Label(self, text=' S3 data here')
+        l.grid(row=0, column=0)
+
+
+class AppOptions:
+    def __init__(self):
+        self.develop = tk.BooleanVar()
+        self.develop.set(False)
+        self._active_theme = 'darkly'
+        self.active_choice = tk.StringVar()
+        self.active_choice.set('AWSec2')
+        self.remember_service = tk.BooleanVar()
+        self.remember_service.set(False)
+        self.load()
+
+    @property
+    def active_theme(self):
+        return self._active_theme
+
+    @active_theme.setter
+    def active_theme(self, val):
+        self._active_theme = val
+        ttk.Style(self.active_theme)
+
+    @property
+    def config_file(self):
+        # TODO adjust per platform
+        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc', 'config.ini')
+
+    def defaults(self):
+        return {'Appearance': {'theme': 'darkly',},
+                'State': {'service': 'AWSec2', 'remember': False}
+                }
+
+    def save(self):
+        config = self.defaults()
+        config['Appearance']['theme'] = self.active_theme
+        config['State']['service'] = self.active_choice.get()
+        config['State']['remember'] = self.remember_service.get()
+        if not os.path.exists(os.path.dirname(self.config_file)):
+            os.makedirs(os.path.dirname(self.config_file))
+        with open(self.config_file, 'w') as conf_file:
+            conf_file.write(json.dumps(config))
+
+    def load(self):
+        config = self.defaults()
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as conf_file:
+                config = json.loads(conf_file.read())
+        if 'Appearance' not in config: config['Appearance'] = {}
+        if 'State' not in config: config['State'] = {}
+        self.active_theme = config['Appearance'].get('theme', 'darkly')
+        ttk.Style(self.active_theme)
+        self.active_choice.set(config['State'].get('service', 'AWSec2'))
+        self.remember_service.set(config['State'].get('remember', False))
+
+
+class SawscPrefs(tk.Toplevel):
     def __init__(self, par, **kwargs):
         super().__init__(par, **kwargs)
         self.title('Sawsc Preferences')
@@ -160,178 +144,50 @@ class SawscOptions(tk.Toplevel):
         lbl = ttk.Label(self, text='Development:')
         lbl.grid(row=10, column=0, padx=3, sticky=tk.E)
         # store to allow test activate
-        self.dev_opt = ttk.Checkbutton(self, variable=self.master.develop, command=self.dev_change)
+        self.dev_opt = ttk.Checkbutton(self, variable=Opts.develop, command=self.change_dev)
         self.dev_opt.grid(row=10, column=1, sticky=tk.W)
 
-        lbl = ttk.Label(self, text='Scroll speed:')
-        lbl.grid(row=500, column=0, padx=3, sticky=tk.E)
-        val = ttk.Spinbox(self, textvariable=self.master.scrollspeed, from_=1, to=20, width=5)
-        val.grid(row=500, column=1, sticky=tk.W)
+        lbl = ttk.Label(self, text='Theme:')
+        lbl.grid(row=20, column=0, padx=3, sticky=tk.E)
+        self.theme_choice = tk.StringVar()
+        self.theme_choice.set(Opts.active_theme)
+        theme_options = [t for t in ttk.Style().theme_names()]
+        cb = ttk.Combobox(self, textvariable=self.theme_choice, values=theme_options)
+        cb.grid(row=20, column=1, sticky=tk.W)
+        cb.bind('<<ComboboxSelected>>', self.change_style)
 
+        lbl = ttk.Label(self, text='Remember service:')
+        lbl.grid(row=30, column=0, padx=3, sticky=tk.E)
+        rs = ttk.Checkbutton(self, variable=Opts.remember_service)
+        rs.grid(row=30, column=1, sticky=tk.W)
 
-    def dev_change(self, evnt=None):
+        b = ttk.Button(self, text='Save', bootstyle='success', command=self.save)
+        b.grid(row=900, column=1, sticky=tk.SE, padx=PADDING*2, pady=PADDING)
+        self.rowconfigure(900, weight=1)
+
+    def change_dev(self, evnt=None):
         self.master.show_develop()
 
+    def change_style(self, evnt=None):
+        Opts.active_theme = self.theme_choice.get()
 
-class SawscRsrc(tk.Canvas):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.dragging = True
-        self.config(width=80, height=80, bg=None)
-        # can't get tk to update size
-        self.s_width = 80
-        self.s_height = 80
-        self.fill_colour = 'blue'
-        self.border_colour = 'DarkBlue'
-
-    # adapted from https://stackoverflow.com/a/61162928/2684771
-    def _draw(self):
-
-        ratioMultiplier = 1
-        ratioDividend = 2
-
-        x = [0, int(self.cget('width')), int(self.cget('width')), 0]
-        y = [0, 0, int(self.cget('height')), int(self.cget('height'))]
-        # Array to store the points
-        points = []
-
-        # Iterate over the x points
-        for i in range(len(x)):
-            # Set vertex
-            points.append(x[i])
-            points.append(y[i])
-
-            # If it's not the last point
-            if i != (len(x) - 1):
-                # Insert submultiples points. The more the sharpness, the more these points will be
-                # closer to the vertex.
-                points.append((ratioMultiplier*x[i] + x[i + 1])/ratioDividend)
-                points.append((ratioMultiplier*y[i] + y[i + 1])/ratioDividend)
-                points.append((ratioMultiplier*x[i + 1] + x[i])/ratioDividend)
-                points.append((ratioMultiplier*y[i + 1] + y[i])/ratioDividend)
-            else:
-                # Insert submultiples points.
-                points.append((ratioMultiplier*x[i] + x[0])/ratioDividend)
-                points.append((ratioMultiplier*y[i] + y[0])/ratioDividend)
-                points.append((ratioMultiplier*x[0] + x[i])/ratioDividend)
-                points.append((ratioMultiplier*y[0] + y[i])/ratioDividend)
-                # Close the polygon
-                points.append(x[0])
-                points.append(y[0])
-
-        self.create_polygon(points, smooth=True, fill=self.fill_colour)
-
-
-class SawscRegion(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#99ccff'
-        self._draw()
-
-
-class SawscVPC(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#ffffcc'
-        self._draw()
-
-
-class SawscNet(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#ccccff'
-        self._draw()
-
-
-class SawscEC2(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#33cc33'
-        self._draw()
-
-
-class SawscRDS(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#ff9933'
-        self._draw()
-
-
-class SawscAPI(SawscRsrc):
-    def __init__(self, par, **kwargs):
-        super().__init__(par)
-        self.fill_colour='#ff99ff'
-        self._draw()
-
-
-class SawscPalette(ttk.Frame):
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
-        self._drag_item = None
-        self.palette_button(0, 0, 'Rgn', SawscRegion)
-        self.palette_button(0, 1, 'Vpc', SawscVPC)
-        self.palette_button(1, 0, 'Net', SawscNet)
-        self.palette_button(1, 1, 'EC2', SawscEC2)
-        self.palette_button(2, 0, 'RDS', SawscRDS)
-        self.palette_button(2, 1, 'API', SawscAPI)
-
-    def palette_button(self, row, col, text, cls):
-        b = ttk.Button(self, text=text, width=TOOL_WIDTH)
-        b.item_class = cls
-        b.grid(row=row, column=col)
-        b.bind('<Button-1>', self.drag_start)
-        b.bind('<B1-Motion>', self.drag_motion)
-        b.bind('<ButtonRelease-1>', self.drag_end)
-        return b
-
-    def drag_start(self, evnt):
-        if self._drag_item is None:
-            self._drag_item = evnt.widget.item_class(self.master.display.parent_widget())
-            self._drag_item.xadj = self.master.display.winfo_rootx() - evnt.widget.winfo_rootx()
-            self._drag_item.yadj = self.master.display.winfo_rooty() - evnt.widget.winfo_rooty()
-            xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
-            ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
-            self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
-            self.save_cursor = evnt.widget['cursor'] or ''
-            evnt.widget['cursor'] = 'hand1'
-
-    def drag_motion(self, evnt):
-        if self._drag_item is not None:
-            xpos = self.master.display.canvasx(evnt.x - self._drag_item.xadj)
-            ypos = self.master.display.canvasx(evnt.y - self._drag_item.yadj)
-            self._drag_item.place(x=xpos, y=ypos, anchor=tk.NW)
-            self.master.display.fit_to(xpos+self._drag_item.s_width, ypos+self._drag_item.s_height)
-
-    def drag_end(self, evnt):
-        if self._drag_item is not None:
-            evnt.widget['cursor'] = self.save_cursor
-            self.master.display.refresh_size()
-            self._drag_item = None
+    def save(self, evnt=None):
+        Opts.save()
+        self.destroy()
 
 
 class SawscGUI(tk.Tk):
     def __init__(self):
+        global Opts
         super().__init__()
         self.title('Sawsc')
         self.minsize(width=500, height=400)
-        self.develop = tk.BooleanVar()
-        self.develop.set(DEBUG)
+        if Opts is None:
+            Opts = AppOptions()
         self.develop_notice = None
-
-        self.scrollspeed = tk.IntVar()
-        if sys.platform.startswith('osx'):
-            self.scrollspeed.set(1)
-        else:
-            self.scrollspeed.set(6)
-        self.palette = SawscPalette(self)
-        self.palette.grid(row=0, column=0, rowspan=100, sticky=tk.NS)
-        self.display = ScrollableFrame(self)
-        self.display.grid(row=10, column=10, sticky=tk.NSEW)
-        self.columnconfigure(10, weight=1)
-        self.rowconfigure(10, weight=1)
-        self.add_menus()
         self.bind('<Control-q>', self.quitkey)
-        self.show_develop()
+        self.add_menus()
+        self.layout()
 
     def add_menus(self):
         self.mainmenu = tk.Menu(self)
@@ -358,20 +214,48 @@ class SawscGUI(tk.Tk):
 
         self.config(menu=self.mainmenu)
 
+    def layout(self):
+        self.button_list = ScrolledFrame(self, padding=0)
+        self.button_list.grid(row=0, column=0, sticky=tk.NS)
+
+        max_b_width = 0
+        for r,s in enumerate(KNOWN_SERVICES):
+            b = ttk.Radiobutton(self.button_list, text=KNOWN_SERVICES[s], value=s,
+                            variable=Opts.active_choice,
+                            command=self.change_service,
+                            bootstyle='toolbutton')
+            b.grid(row=r, column=0, sticky=EW)
+            b.update()
+            max_b_width = max(max_b_width, b.winfo_width())
+        self.button_list.container['width'] = max_b_width + 11
+
+        self.info_view = ScrolledFrame(self)
+        self.info_view.grid(row=0, column=1, sticky=tk.NSEW)
+
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(1, weight=10)
+
+        self.change_service()
+
+    def change_service(self, evnt=None):
+        for c in self.info_view.winfo_children():
+            c.destroy()
+        nview = globals()[Opts.active_choice.get()](self.info_view)
+        nview.grid(row=0, column=1, sticky=tk.NSEW)
+        if Opts.remember_service.get():
+            Opts.save()
+
     def about_me(self, evnt=None):
-        mb.showinfo('About', message='Setup and manage AWS resources.')
+        mb.ok('Setup and manage AWS resources.', title='About')
 
     def menu_preferences(self, evnt=None):
-        w = SawscOptions(self)
+        w = SawscPrefs(self)
 
     def quitkey(self, evnt=None):
         self.destroy()
 
-    def menu_new_resource(self, evnt=None):
-        pass
-
     def show_develop(self, evnt=None):
-        if self.develop.get():
+        if Opts.develop.get():
             if self.develop_notice is None:
                 self.develop_notice = ttk.Label(self, text='DEVELOPMENT',
                         font=('Dejavu Sans', 12, 'bold'), foreground='red')
@@ -383,14 +267,15 @@ class SawscGUI(tk.Tk):
                 self.develop_notice = None
 
     def main(self, args=None):
+        self.show_develop()
         return self.mainloop()
 
 
 def main(args=None):
-    global DEBUG
-    DEBUG = ('-d' in sys.argv) or ('--debug' in sys.argv)
     mw = SawscGUI()
+    Opts.develop.set(('-d' in sys.argv) or ('--debug' in sys.argv))
     sys.exit(mw.main(sys.argv))
+
 
 if __name__ == '__main__':
     print() # start output on a new line
