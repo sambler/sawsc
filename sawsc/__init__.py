@@ -31,46 +31,4 @@
 #
 
 
-import boto3
-import sys
-
-
-class BotoConfig():
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
-        # self.grid()
-        # lbl = ttk.Label(self, text='')
-        # lbl.grid(row=0, column=0)
-
-        # lbl = ttk.Label(self, text='Region:')
-        # lbl.grid(row=10, column=0, padx=3, sticky=tk.E)
-        # val = ttk.Checkbutton(self, variable=APP_WIN.develop, command=self.dev_change)
-        # val.grid(row=10, column=1, sticky=tk.W)
-
-        # lbl = ttk.Label(self, text='Scroll speed:')
-        # lbl.grid(row=500, column=0, padx=3, sticky=tk.E)
-        # val = ttk.Entry(self, textvariable=APP_WIN.scrollspeed)
-        # val.grid(row=500, column=1, sticky=tk.W)
-
-        # lbl = ttk.Label(self, text='')
-        # lbl.grid(row=999, column=0)
-
-'''
-
-https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#guide-configuration
-
-
-https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
-get region list
-
-client = boto3.client('ec2')
-
-# Retrieves all regions/endpoints that work with EC2
-response = client.describe_regions()
-
-# Retrieves availability zones only for region of the ec2 object
-response = client.describe_availability_zones()
-
-regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
-
-'''
+from . import __version__ as vers

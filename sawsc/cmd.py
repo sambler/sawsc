@@ -64,6 +64,8 @@ def main():
     if args.write:
         print('Creating and adjusting resources...')
 
+    print('That is all I do so far... still waiting...')
+
     return 0
 
 if __name__ == '__main__':

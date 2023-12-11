@@ -32,6 +32,7 @@
 
 
 import boto3
+from importlib import import_module
 import json
 import os
 import sawsc
@@ -44,39 +45,16 @@ from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tableview import Tableview
 from ttkbootstrap import toast
 from ttkbootstrap.tooltip import ToolTip
-#from ttkbootstrap import validator, add_validation
 
 PADDING = 5
 
 Opts = None # created in gui init()
 
-# service as class_name: display_name
-KNOWN_SERVICES = {
-    'AWSvpc': 'VPC',
-    'AWSec2': 'EC2',
-    'AWSs3': 'S3',
-    }
-
-
-class AWSvpc(ttk.Frame):
-    def __init__(self, par):
-        super().__init__(par)
-        l = ttk.Label(self, text=' VPC data here')
-        l.grid(row=0, column=0)
-
-
-class AWSec2(ttk.Frame):
-    def __init__(self, par):
-        super().__init__(par)
-        l = ttk.Label(self, text=' EC2 data here')
-        l.grid(row=0, column=0)
-
-
-class AWSs3(ttk.Frame):
-    def __init__(self, par):
-        super().__init__(par)
-        l = ttk.Label(self, text=' S3 data here')
-        l.grid(row=0, column=0)
+service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
+                s in sorted(os.listdir(os.path.join(os.path.dirname(
+                                    os.path.realpath(__file__)), 'service')))
+                if s not in ['__init__.py', '__pycache__']
+                }
 
 
 class AppOptions:
@@ -85,7 +63,7 @@ class AppOptions:
         self.develop.set(False)
         self._active_theme = 'darkly'
         self.active_choice = tk.StringVar()
-        self.active_choice.set('AWSec2')
+        self.active_choice.set('aws_ec2')
         self.remember_service = tk.BooleanVar()
         self.remember_service.set(False)
         self.load()
@@ -106,7 +84,7 @@ class AppOptions:
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
-                'State': {'service': 'AWSec2', 'remember': False}
+                'State': {'service': 'aws_ec2', 'remember': False}
                 }
 
     def save(self):
@@ -128,8 +106,9 @@ class AppOptions:
         if 'State' not in config: config['State'] = {}
         self.active_theme = config['Appearance'].get('theme', 'darkly')
         ttk.Style(self.active_theme)
-        self.active_choice.set(config['State'].get('service', 'AWSec2'))
         self.remember_service.set(config['State'].get('remember', False))
+        if self.remember_service.get():
+            self.active_choice.set(config['State'].get('service', 'aws_ec2'))
 
 
 class SawscPrefs(tk.Toplevel):
@@ -219,8 +198,8 @@ class SawscGUI(tk.Tk):
         self.button_list.grid(row=0, column=0, sticky=tk.NS)
 
         max_b_width = 0
-        for r,s in enumerate(KNOWN_SERVICES):
-            b = ttk.Radiobutton(self.button_list, text=KNOWN_SERVICES[s], value=s,
+        for r,s in enumerate(service.keys()):
+            b = ttk.Radiobutton(self.button_list, text=service[s].name, value=s,
                             variable=Opts.active_choice,
                             command=self.change_service,
                             bootstyle='toolbutton')
@@ -240,7 +219,8 @@ class SawscGUI(tk.Tk):
     def change_service(self, evnt=None):
         for c in self.info_view.winfo_children():
             c.destroy()
-        nview = globals()[Opts.active_choice.get()](self.info_view)
+        service[Opts.active_choice.get()].Opts = Opts
+        nview = service[Opts.active_choice.get()].ListFrame(self.info_view)
         nview.grid(row=0, column=1, sticky=tk.NSEW)
         if Opts.remember_service.get():
             Opts.save()
