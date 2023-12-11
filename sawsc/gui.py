@@ -117,7 +117,7 @@ class AppOptions:
         if not os.path.exists(os.path.dirname(self.config_file)):
             os.makedirs(os.path.dirname(self.config_file))
         with open(self.config_file, 'w') as conf_file:
-            conf_file.write(json.dumps(config))
+            conf_file.write(json.dumps(config, indent=4))
 
     def load(self):
         config = self.defaults()
