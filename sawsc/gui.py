@@ -220,6 +220,7 @@ class SawscGUI(tk.Tk):
         for c in self.info_view.winfo_children():
             c.destroy()
         service[Opts.active_choice.get()].Opts = Opts
+        service[Opts.active_choice.get()].PADDING = PADDING
         nview = service[Opts.active_choice.get()].ListFrame(self.info_view)
         nview.grid(row=0, column=1, sticky=tk.NSEW)
         if Opts.remember_service.get():
