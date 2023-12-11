@@ -6,21 +6,9 @@ Pronounced "Saucy"
 SawsC is Shane's AWS Configurator, which is a tkinter GUI that uses boto3 to assist developing and maintaining AWS resources.
 
 
-
-
-Run tests
+run locally
 ```sh
-python -m unittest
-```
-
-or run test with all python versions
-```sh
-tox
-```
-
-View coverage report after tox
-```sh
-firefox htmlcov/index.html
+python  sawsc/gui.py
 ```
 
 install into home bin
