@@ -102,7 +102,7 @@ class AppOptions:
     @property
     def config_file(self):
         # TODO adjust per platform
-        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc', 'config.ini')
+        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc', 'config.json')
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
