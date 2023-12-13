@@ -2,9 +2,6 @@
 import threading as thr
 import tkinter as tk
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from ttkbootstrap.dialogs import Messagebox as mb
-from ttkbootstrap.tooltip import ToolTip
 
 
 class ListBase(ttk.Frame):

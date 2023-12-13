@@ -1,11 +1,7 @@
 
 import boto3
-from pprint import pp
 import tkinter as tk
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from ttkbootstrap.dialogs import Messagebox as mb
-from ttkbootstrap.tooltip import ToolTip
 
 from . import ListBase
 
