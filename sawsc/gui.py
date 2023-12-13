@@ -44,7 +44,7 @@ from ttkbootstrap.scrolled import ScrolledFrame
 
 PADDING = 5
 
-Opts = None # created in gui init()
+App = None # created in main()
 
 service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
                 s in sorted(os.listdir(os.path.join(os.path.dirname(
@@ -119,13 +119,13 @@ class SawscPrefs(tk.Toplevel):
         lbl = ttk.Label(self, text='Development:')
         lbl.grid(row=10, column=0, padx=3, sticky=tk.E)
         # store to allow test activate
-        self.dev_opt = ttk.Checkbutton(self, variable=Opts.develop, command=self.change_dev)
+        self.dev_opt = ttk.Checkbutton(self, variable=App.opts.develop, command=self.change_dev)
         self.dev_opt.grid(row=10, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Theme:')
         lbl.grid(row=20, column=0, padx=3, sticky=tk.E)
         self.theme_choice = tk.StringVar()
-        self.theme_choice.set(Opts.active_theme)
+        self.theme_choice.set(App.opts.active_theme)
         theme_options = [t for t in ttk.Style().theme_names()]
         cb = ttk.Combobox(self, textvariable=self.theme_choice, values=theme_options)
         cb.grid(row=20, column=1, sticky=tk.W)
@@ -133,7 +133,7 @@ class SawscPrefs(tk.Toplevel):
 
         lbl = ttk.Label(self, text='Remember service:')
         lbl.grid(row=30, column=0, padx=3, sticky=tk.E)
-        rs = ttk.Checkbutton(self, variable=Opts.remember_service)
+        rs = ttk.Checkbutton(self, variable=App.opts.remember_service)
         rs.grid(row=30, column=1, sticky=tk.W)
 
         b = ttk.Button(self, text='Save', bootstyle='success', command=self.save)
@@ -141,26 +141,29 @@ class SawscPrefs(tk.Toplevel):
         self.rowconfigure(900, weight=1)
 
     def change_dev(self, evnt=None):
-        self.master.show_develop()
+        App.show_develop()
 
     def change_style(self, evnt=None):
-        Opts.active_theme = self.theme_choice.get()
+        App.opts.active_theme = self.theme_choice.get()
 
     def save(self, evnt=None):
-        Opts.save()
+        App.opts.save()
         self.destroy()
 
 
-class SawscGUI(tk.Tk):
+class SawscGUI(tk.Toplevel):
     def __init__(self):
         global Opts
         super().__init__()
         self.title('Sawsc')
         self.minsize(width=500, height=400)
-        if Opts is None:
-            Opts = AppOptions()
         self.develop_notice = None
+        self.active_choice = tk.StringVar()
+        self.active_choice.set(App.opts.active_choice.get())
+        self.bind('<Control-n>', self.menu_new_window)
         self.bind('<Control-q>', self.quitkey)
+        self.bind('<Control-w>', self.menu_close_window)
+        self.protocol("WM_DELETE_WINDOW", self.menu_close_window)
         self.add_menus()
         self.layout()
 
@@ -169,9 +172,11 @@ class SawscGUI(tk.Tk):
 
         # File
         self.filemenu = tk.Menu(self.mainmenu, tearoff=0)
-        #self.filemenu.add_command(label='New Resource',
-        #        command=self.menu_new_resource, accelerator='Ctrl+N')
-        #self.filemenu.add_separator()
+        self.filemenu.add_command(label='New Window',
+                command=self.menu_new_window, accelerator='Ctrl+N')
+        self.filemenu.add_command(label='Close Window',
+                command=self.menu_close_window, accelerator='Ctrl+W')
+        self.filemenu.add_separator()
         self.filemenu.add_command(label='Preferences',
                 command=self.menu_preferences)
 
@@ -196,10 +201,10 @@ class SawscGUI(tk.Tk):
         max_b_width = 0
         for r,s in enumerate(service.keys()):
             b = ttk.Radiobutton(self.button_list, text=service[s].name, value=s,
-                            variable=Opts.active_choice,
+                            variable=self.active_choice,
                             command=self.change_service,
                             bootstyle='toolbutton')
-            b.grid(row=r, column=0, sticky=EW)
+            b.grid(row=r, column=0, sticky=tk.EW)
             b.update()
             max_b_width = max(max_b_width, b.winfo_width())
         self.button_list.container['width'] = max_b_width + 11
@@ -215,12 +220,13 @@ class SawscGUI(tk.Tk):
     def change_service(self, evnt=None):
         for c in self.info_view.winfo_children():
             c.destroy()
-        service[Opts.active_choice.get()].Opts = Opts
-        service[Opts.active_choice.get()].PADDING = PADDING
-        nview = service[Opts.active_choice.get()].ListFrame(self.info_view)
+        service[self.active_choice.get()].Opts = App.opts
+        service[self.active_choice.get()].PADDING = PADDING
+        nview = service[self.active_choice.get()].ListFrame(self.info_view)
         nview.grid(row=0, column=1, sticky=tk.NSEW)
-        if Opts.remember_service.get():
-            Opts.save()
+        if App.opts.remember_service.get():
+            App.opts.active_choice.set(self.active_choice.get())
+            App.opts.save()
 
     def about_me(self, evnt=None):
         mb.ok('Setup and manage AWS resources.', title='About')
@@ -228,11 +234,19 @@ class SawscGUI(tk.Tk):
     def menu_preferences(self, evnt=None):
         w = SawscPrefs(self)
 
-    def quitkey(self, evnt=None):
+    def menu_new_window(self, evnt=None):
+        w = SawscGUI()
+        w.show_develop()
+
+    def menu_close_window(self, evnt=None):
+        App.after(100, App.check_windows())
         self.destroy()
 
+    def quitkey(self, evnt=None):
+        App.quit_app()
+
     def show_develop(self, evnt=None):
-        if Opts.develop.get():
+        if App.opts.develop.get():
             if self.develop_notice is None:
                 self.develop_notice = ttk.Label(self, text='DEVELOPMENT',
                         font=('Dejavu Sans', 12, 'bold'), foreground='red')
@@ -243,15 +257,42 @@ class SawscGUI(tk.Tk):
                 self.develop_notice.destroy()
                 self.develop_notice = None
 
+
+class AppWindow(tk.Tk):
+    def __init__(self):
+        global App
+        super().__init__()
+        self.opts = AppOptions()
+        App = self
+
+    def check_windows(self):
+        wl = [n for n in self.children]
+        if len(wl) < 2:
+            self.quit()
+
+    def show_develop(self):
+        for w in self.children:
+            if isinstance(self.children[w], SawscGUI):
+                self.children[w].show_develop()
+
+    def quit_app(self):
+        wl = [n for n in self.children]
+        for n in wl:
+            if isinstance(self.children[n], SawscGUI):
+                self.children[n].menu_close_window()
+        self.quit()
+
     def main(self, args=None):
-        self.show_develop()
+        self.opts.develop.set(('-d' in sys.argv) or ('--debug' in sys.argv))
+        fw = SawscGUI()
+        fw.show_develop()
         return self.mainloop()
 
 
 def main(args=None):
-    mw = SawscGUI()
-    Opts.develop.set(('-d' in sys.argv) or ('--debug' in sys.argv))
-    sys.exit(mw.main(sys.argv))
+    r = AppWindow()
+    r.withdraw()
+    sys.exit(r.main())
 
 
 if __name__ == '__main__':
