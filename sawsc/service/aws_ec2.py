@@ -5,13 +5,15 @@ from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Messagebox as mb
 from ttkbootstrap.tooltip import ToolTip
 
+from . import ListBase
+
 Opts = None # set from gui when making ListFrame
 
 name = 'EC2'
 
-class ListFrame(ttk.Frame):
-    def __init__(self, par):
-        super().__init__(par)
+class ListFrame(ListBase):
+    def thr_get_data(self):
+        self.clear_list()
         l = ttk.Label(self, text=f' {name} data here')
         l.grid(row=0, column=0)
 

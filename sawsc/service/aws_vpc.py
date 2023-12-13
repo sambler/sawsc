@@ -1,14 +1,13 @@
 
 import boto3
 from pprint import pp
-import threading as thr
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.dialogs import Messagebox as mb
 from ttkbootstrap.tooltip import ToolTip
 
-from . import ItemBase, ListBase
+from . import ListBase
 
 name = 'VPC'
 
@@ -18,25 +17,14 @@ PADDING = 2
 ec2 = boto3.client('ec2')
 
 class ListFrame(ListBase):
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
-        l = ttk.Label(self, text=f' {name} data here')
-        l.grid(row=0, column=0)
-        self.refresh()
-
-    def refresh(self):
-        t = thr.Thread(target=self.thr_get_vpc)
-        t.daemon = True
-        t.start()
-
-    def thr_get_vpc(self):
+    def thr_get_data(self):
         vpcs = ec2.describe_vpcs()
         self.clear_list()
         while True:
             for v in vpcs['Vpcs']:
                 nt = [t['Value'] for t in v['Tags'] if t['Key'] == 'Name'][0]
                 if nt == '': nt = 'Unnamed'
-                item = ItemFrame(self, borderwidth=2, relief=tk.RIDGE)
+                item = ttk.Frame(self, borderwidth=2, relief=tk.RIDGE)
                 item.pack(side=tk.TOP, expand=True, fill=tk.X)
                 # name
                 l = ttk.Button(item, text=nt, bootstyle='link', command=lambda tx=nt: self.copy_to_clip(tx))
@@ -61,9 +49,4 @@ class ListFrame(ListBase):
                 vpcs = ec2.describe_vpcs(NextToken=vpcs['NextToken'])
             else:
                 break
-
-
-class ItemFrame(ItemBase):
-    def __init__(self, par, **kwargs):
-        super().__init__(par, **kwargs)
 
