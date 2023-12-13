@@ -23,20 +23,24 @@ class ListFrame(ListBase):
                 item = ttk.Frame(self, borderwidth=2, relief=tk.RIDGE)
                 item.pack(side=tk.TOP, expand=True, fill=tk.X)
                 # name
-                l = ttk.Button(item, text=nt, bootstyle='link', command=lambda tx=nt: self.copy_to_clip(tx))
+                l = ttk.Button(item, text=nt, bootstyle='link',
+                            command=lambda tx=nt: self.copy_to_clip(tx))
                 l.grid(row=0, column=0, sticky=tk.W, padx=PADDING)
                 # VpcId
-                l = ttk.Button(item, text=v['VpcId'], bootstyle='link', command=lambda tx=v['VpcId']: self.copy_to_clip(tx))
+                l = ttk.Button(item, text=v['VpcId'], bootstyle='link',
+                            command=lambda tx=v['VpcId']: self.copy_to_clip(tx))
                 l.grid(row=0, column=2, sticky=tk.W, padx=PADDING)
                 # CidrBlock
-                l = ttk.Button(item, text=v['CidrBlock'], bootstyle='link', command=lambda tx=v['CidrBlock']: self.copy_to_clip(tx))
+                l = ttk.Button(item, text=v['CidrBlock'], bootstyle='link',
+                            command=lambda tx=v['CidrBlock']: self.copy_to_clip(tx))
                 l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
                 # Ipv6CidrBlockAssociationSet - Ipv6CidrBlock
                 if 'Ipv6CidrBlockAssociationSet' in v:
                     ip6f = ttk.Frame(item)
                     ip6f.grid(row=1, column=2)
                     for r,ip6bas in enumerate(v['Ipv6CidrBlockAssociationSet']):
-                        l = ttk.Button(ip6f, text=ip6bas['Ipv6CidrBlock'], bootstyle='link', command=lambda tx=ip6bas['Ipv6CidrBlock']: self.copy_to_clip(tx))
+                        l = ttk.Button(ip6f, text=ip6bas['Ipv6CidrBlock'], bootstyle='link',
+                                    command=lambda tx=ip6bas['Ipv6CidrBlock']: self.copy_to_clip(tx))
                         l.grid(row=r, column=0, sticky=tk.W, padx=PADDING)
                 else:
                     l = ttk.Label(item, text='No IPv6 CIDR')
