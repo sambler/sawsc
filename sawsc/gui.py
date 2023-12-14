@@ -62,6 +62,7 @@ class AppOptions:
         self.active_choice.set('aws_ec2')
         self.remember_service = tk.BooleanVar()
         self.remember_service.set(False)
+        self.aws_customer_id = tk.StringVar()
         self.load()
 
     @property
@@ -80,7 +81,8 @@ class AppOptions:
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
-                'State': {'service': 'aws_ec2', 'remember': False}
+                'State': {'service': 'aws_ec2', 'remember': False},
+                'Accounts': {'aws_customer_id': '123465'},
                 }
 
     def save(self):
@@ -88,6 +90,7 @@ class AppOptions:
         config['Appearance']['theme'] = self.active_theme
         config['State']['service'] = self.active_choice.get()
         config['State']['remember'] = self.remember_service.get()
+        config['Accounts']['aws_customer_id'] = self.aws_customer_id.get()
         if not os.path.exists(os.path.dirname(self.config_file)):
             os.makedirs(os.path.dirname(self.config_file))
         with open(self.config_file, 'w') as conf_file:
@@ -100,11 +103,13 @@ class AppOptions:
                 config = json.loads(conf_file.read())
         if 'Appearance' not in config: config['Appearance'] = {}
         if 'State' not in config: config['State'] = {}
+        if 'Accounts' not in config: config['Accounts'] = {}
         self.active_theme = config['Appearance'].get('theme', 'darkly')
         ttk.Style(self.active_theme)
         self.remember_service.set(config['State'].get('remember', False))
         if self.remember_service.get():
             self.active_choice.set(config['State'].get('service', 'aws_ec2'))
+        self.aws_customer_id.set(config['Accounts'].get('aws_customer_id', '123456'))
 
 
 class SawscPrefs(tk.Toplevel):
@@ -135,6 +140,11 @@ class SawscPrefs(tk.Toplevel):
         lbl.grid(row=30, column=0, padx=3, sticky=tk.E)
         rs = ttk.Checkbutton(self, variable=App.opts.remember_service)
         rs.grid(row=30, column=1, sticky=tk.W)
+
+        lbl = ttk.Label(self, text='AWS customer ID:')
+        lbl.grid(row=40, column=0, padx=3, sticky=tk.E)
+        rs = ttk.Entry(self, textvariable=App.opts.aws_customer_id)
+        rs.grid(row=40, column=1, sticky=tk.W)
 
         b = ttk.Button(self, text='Save', bootstyle='success', command=self.save)
         b.grid(row=900, column=1, sticky=tk.SE, padx=PADDING*2, pady=PADDING)
