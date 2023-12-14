@@ -2,6 +2,7 @@
 import boto3
 import tkinter as tk
 import ttkbootstrap as ttk
+from ttkbootstrap.tooltip import ToolTip
 
 from . import ListBase
 
@@ -26,18 +27,22 @@ class ListFrame(ListBase):
                 l = ttk.Button(item, text=nt, bootstyle='link',
                             command=lambda tx=nt: self.copy_to_clip(tx))
                 l.grid(row=0, column=0, sticky=tk.W, padx=PADDING)
+                tt = ToolTip(l, text='Name tag of security group')
                 # SG id
                 l = ttk.Button(item, text=g['GroupId'], bootstyle='link',
                             command=lambda tx=g['GroupId']: self.copy_to_clip(tx))
                 l.grid(row=0, column=1, sticky=tk.W, padx=PADDING)
+                tt = ToolTip(l, text='Security Group ID')
                 # VpcId
                 l = ttk.Button(item, text=g['VpcId'], bootstyle='link',
                             command=lambda tx=g['VpcId']: self.copy_to_clip(tx))
                 l.grid(row=0, column=2, sticky=tk.W, padx=PADDING)
+                tt = ToolTip(l, text='VPC ID using this SG')
                 # desc
                 l = ttk.Button(item, text=g['Description'], bootstyle='link',
                             command=lambda tx=g['Description']: self.copy_to_clip(tx))
                 l.grid(row=2, column=0, columnspan=5, sticky=tk.W, padx=PADDING)
+                tt = ToolTip(l, text='Description')
                 rules_frame = ttk.Frame(item)
                 rules_frame.grid(row=10, column=0, columnspan=10, sticky=tk.EW, padx=PADDING, pady=PADDING)
                 # inbound rules
@@ -71,6 +76,7 @@ class ListFrame(ListBase):
                         l = ttk.Button(ip4_frame, text=ip4['CidrIp'], bootstyle='link',
                             command=lambda tx=ip4['CidrIp']: self.copy_to_clip(tx))
                         l.grid(row=ir, column=0, padx=PADDING)
+                        tt = ToolTip(l, text='IPv4 CIDR block')
                         if 'Description' in ip4:
                             l = ttk.Button(ip4_frame, text=ip4['Description'], bootstyle='link',
                                 command=lambda tx=ip4['Description']: self.copy_to_clip(tx))
@@ -81,6 +87,7 @@ class ListFrame(ListBase):
                         l = ttk.Button(ip6_frame, text=ip6['CidrIpv6'], bootstyle='link',
                             command=lambda tx=ip6['CidrIpv6']: self.copy_to_clip(tx))
                         l.grid(row=ir, column=0, padx=PADDING)
+                        tt = ToolTip(l, text='IPv6 CIDR block')
                         if 'Description' in ip6:
                             l = ttk.Button(ip6_frame, text=ip6['Description'], bootstyle='link',
                                 command=lambda tx=ip6['Description']: self.copy_to_clip(tx))
@@ -116,6 +123,7 @@ class ListFrame(ListBase):
                         l = ttk.Button(ip4_frame, text=ip4['CidrIp'], bootstyle='link',
                             command=lambda tx=ip4['CidrIp']: self.copy_to_clip(tx))
                         l.grid(row=ir, column=0, padx=PADDING)
+                        tt = ToolTip(l, text='IPv4 CIDR block')
                         if 'Description' in ip4:
                             l = ttk.Button(ip4_frame, text=ip4['Description'], bootstyle='link',
                                 command=lambda tx=ip4['Description']: self.copy_to_clip(tx))
@@ -126,6 +134,7 @@ class ListFrame(ListBase):
                         l = ttk.Button(ip6_frame, text=ip6['CidrIpv6'], bootstyle='link',
                             command=lambda tx=ip6['CidrIpv6']: self.copy_to_clip(tx))
                         l.grid(row=ir, column=0, padx=PADDING)
+                        tt = ToolTip(l, text='IPv6 CIDR block')
                         if 'Description' in ip6:
                             l = ttk.Button(ip6_frame, text=ip6['Description'], bootstyle='link',
                                 command=lambda tx=ip6['Description']: self.copy_to_clip(tx))
