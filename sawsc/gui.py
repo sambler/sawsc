@@ -167,6 +167,7 @@ class SawscGUI(tk.Toplevel):
         super().__init__()
         self.title('Sawsc')
         self.minsize(width=500, height=400)
+        self.geometry('800x800')
         self.develop_notice = None
         self.active_choice = tk.StringVar()
         self.active_choice.set(App.opts.active_choice.get())
