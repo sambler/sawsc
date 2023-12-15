@@ -1,6 +1,5 @@
 
 import boto3
-from enum import Enum
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.tooltip import ToolTip
@@ -10,7 +9,7 @@ from . import ListBase
 Opts = None # set from gui when making ListFrame
 PADDING = 2
 
-class States(Enum):
+class States:
     # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceState.html
     PENDING = 0
     RUNNING = 16
@@ -75,13 +74,13 @@ class ListFrame(ListBase):
                     tt = ToolTip(l, text='Availability zone')
 
                     # state
-                    i_state = int(i['State']['Code'])
-                    if i_state != States.STOPPED:
+                    if i['State']['Code'] != States.STOPPED:
                         s_style = 'success-link' # green
                     else:
                         s_style = 'link'
                     l = ttk.Button(item, text=i['State']['Name'], bootstyle=s_style,
-                                command=lambda tx=i['State']['Name']: self.copy_to_clip(tx))
+                                command=lambda iid=i['InstanceId'], istate=i['State']['Code'], iname=nt:
+                                    self.change_state(iid, istate, iname))
                     l.grid(row=2, column=0, sticky=tk.W, padx=PADDING)
                     tt = ToolTip(l, text='Instance state')
 
@@ -160,4 +159,54 @@ class ListFrame(ListBase):
                 response = ec2.describe_instances(NextToken=response['NextToken'])
             else:
                 break
+
+    def change_state(self, inst_id, inst_state, inst_name):
+        w = tk.Toplevel(self)
+        w.title('Change state to:')
+        w.resizable(0,0)
+
+        def start():
+            try:
+                ec2.start_instances(InstanceIds=[inst_id])
+            except Exception as e:
+                print(e)
+            w.destroy()
+
+        def restart():
+            ec2.reboot_instances(InstanceIds=[inst_id])
+            w.destroy()
+
+        def stop():
+            ec2.stop_instances(InstanceIds=[inst_id])
+            w.destroy()
+
+        def force_stop():
+            ec2.stop_instances(InstanceIds=[inst_id], Force=True)
+            w.destroy()
+
+        l = ttk.Label(w, text='Instance:')
+        l.grid(row=0, column=0, sticky=tk.E, padx=PADDING)
+        l = ttk.Label(w, text=inst_id)
+        l.grid(row=0, column=1, sticky=tk.W, padx=PADDING)
+        l = ttk.Label(w, text='Name:')
+        l.grid(row=1, column=0, sticky=tk.E, padx=PADDING)
+        l = ttk.Label(w, text=inst_name)
+        l.grid(row=1, column=1, sticky=tk.W, padx=PADDING)
+        bf = ttk.Frame(w)
+        bf.grid(row=10, column=0, columnspan=2, sticky=tk.EW, pady=PADDING)
+        bf.columnconfigure(0, weight=1)
+        bf.columnconfigure(2, weight=1)
+        # start
+        if inst_state == States.STOPPED:
+            b = ttk.Button(bf, text='Start', command=start, bootstyle='success-outline')
+            b.grid(row=10, column=1, sticky=tk.EW, padx=PADDING, pady=PADDING)
+        # force restart
+        b = ttk.Button(bf, text='Restart', command=restart, bootstyle='danger-outline')
+        b.grid(row=20, column=1, sticky=tk.EW,  padx=PADDING, pady=PADDING)
+        # stop
+        b = ttk.Button(bf, text='Stop', command=stop, bootstyle='danger-outline')
+        b.grid(row=30, column=1, sticky=tk.EW,  padx=PADDING, pady=PADDING)
+        # force stop
+        b = ttk.Button(bf, text='Force Stop', command=force_stop, bootstyle='danger-outline')
+        b.grid(row=40, column=1, sticky=tk.EW,  padx=PADDING, pady=PADDING)
 
