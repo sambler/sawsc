@@ -19,6 +19,9 @@ class ListBase(ttk.Frame):
         self.master.master.master.clipboard_append(txt)
         self.master.master.master.update()
 
+    def tag_name(self, inst):
+        return [t['Value'] for t in inst['Tags'] if t['Key'] == 'Name'][0]
+
     def refresh(self):
         t = thr.Thread(target=self.thr_get_data)
         t.daemon = True

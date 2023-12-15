@@ -19,7 +19,7 @@ class ListFrame(ListBase):
         self.clear_list()
         while True:
             for g in sgs['SecurityGroups']:
-                nt = [t['Value'] for t in g['Tags'] if t['Key'] == 'Name'][0]
+                nt = self.tag_name(g)
                 if nt == '': nt = 'Unnamed'
                 item = ttk.Frame(self, borderwidth=2, relief=tk.RIDGE)
                 item.pack(side=tk.TOP, expand=True, fill=tk.X)
