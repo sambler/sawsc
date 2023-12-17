@@ -32,3 +32,33 @@
 
 
 from . import __version__ as vers
+
+size_suffixes = {1000: ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+            1024: ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']}
+
+def hs(size, precision=2, a_k_is_1024=True):
+    """
+    Convert a computer size to human readable form.
+
+    size -- size in bytes
+    a_k_is_1024 --  if True use multiples of 1024
+                    if False use multiples of 1000
+
+    returns: string
+    """
+
+    B = int(size)
+
+    if B == 1:
+        return '1 byte'
+
+    multiple = 1024 if a_k_is_1024 else 1000
+
+    if B < multiple:
+        return '{} bytes'.format(B)
+
+    for suffix in size_suffixes[multiple]:
+        B /= multiple
+        if B < multiple:
+            fmt_str = '{:.'+str(precision)+'f} {}'
+            return fmt_str.format(B, suffix)
