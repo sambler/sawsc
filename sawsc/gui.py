@@ -42,6 +42,9 @@ import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import Messagebox as mb
 from ttkbootstrap.scrolled import ScrolledFrame
+from ttkbootstrap.tableview import Tableview
+
+from . import hs
 
 PADDING = 5
 
@@ -264,9 +267,84 @@ class SawscEC2Types(tk.Toplevel):
     def __init__(self):
         super().__init__()
         self.title('AWS EC2 Types')
+        self.geometry('900x605')
         self.protocol("WM_DELETE_WINDOW", self.close_window)
-        l = ttk.Label(self, text='List of types here.')
-        l.grid(row=0, column=0, padx=PADDING, pady=PADDING)
+        self.bind('<F5>', self.refresh)
+        self.options = ttk.Frame(self)
+        self.options.grid(row=0, column=0, sticky=tk.EW)
+        self.progress = tspinner(self.options)
+        self.progress.grid(row=0, column=1, sticky=tk.E, padx=PADDING)
+        st = ttk.Style()
+        cols = ['Type', 'arch', 'Manuf.', 'VCPUs', 'Cores', 'Threads',
+                'RAM', 'Inst Stg', 'Stg Size',
+                'GPU Name', 'GPU Manuf', 'GPU count', 'GPU RAM',
+                ]
+        self.tree = Tableview(self, coldata=cols, searchable=True,
+                                autofit=True,
+                                stripecolor=('#403f44', None))
+        self.tree.grid(row=1, column=0, sticky=tk.NSEW)
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.refresh()
+
+    def refresh(self, evnt=None):
+        self.tree.delete_rows()
+        t=thr.Thread(target=self.refresh_thread)
+        t.daemon = True
+        self.progress.start()
+        t.start()
+
+    def refresh_thread(self):
+        ec2 = boto3.client('ec2')
+        inst_types = ec2.describe_instance_types()
+        types_data = []
+        for inst in inst_types['InstanceTypes']:
+            tr = []
+            # Type
+            tr.append(inst['InstanceType'])
+            # arch
+            tr.append(','.join(inst['ProcessorInfo']['SupportedArchitectures']))
+            # Manufacturer
+            tr.append(inst['ProcessorInfo']['Manufacturer'])
+            # VCPUs
+            tr.append(inst['VCpuInfo']['DefaultVCpus'])
+            # Cores
+            tr.append(inst['VCpuInfo']['DefaultCores'])
+            # Threads
+            tr.append(inst['VCpuInfo']['DefaultThreadsPerCore'])
+            # RAM - MiB
+            tr.append(hs(inst['MemoryInfo']['SizeInMiB']*1024*1024))
+            # Inst Storage
+            tr.append(inst['InstanceStorageSupported'])
+            # Inst Storage size GB
+            if 'InstanceStorageInfo' in inst:
+                tr.append(hs(inst['InstanceStorageInfo']['TotalSizeInGB']*1024*1024*1024, a_k_is_1024=False))
+            else:
+                tr.append('')
+            # GPU Name
+            have_gpuinfo = 'GpuInfo' in inst
+            if have_gpuinfo:
+                tr.append(','.join([g['Name'] for g in inst['GpuInfo']['Gpus']]))
+                # GPU Manuf
+                tr.append(','.join([g['Manufacturer'] for g in inst['GpuInfo']['Gpus']]))
+                # GPU count
+                tr.append(','.join([str(g['Count']) for g in inst['GpuInfo']['Gpus']]))
+                # GPU RAM MiB
+                tr.append(','.join([hs(g['MemoryInfo']['SizeInMiB']*1024*1024) for g in inst['GpuInfo']['Gpus']]))
+            else:
+                tr.append('')
+                tr.append('')
+                tr.append('')
+                tr.append('')
+            types_data.append(tr)
+
+        self.tree.insert_rows('end', types_data)
+        self.tree.reset_table()
+        self.tree.autofit_columns()
+        self.tree.align_column_right(cid=6)
+        self.tree.align_column_right(cid=8)
+        self.tree.align_column_right(cid=12)
+        self.progress.stop()
 
     def close_window(self, evnt=None):
         App.after(100, App.check_windows())
