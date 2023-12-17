@@ -112,7 +112,7 @@ class AppOptions:
 
     @property
     def config_file(self):
-        return os.path.join(CONFIG_DIR, 'config.json')
+        return os.path.join(self.config_dir, 'config.json')
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
