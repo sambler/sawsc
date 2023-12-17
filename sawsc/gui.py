@@ -50,9 +50,6 @@ PADDING = 5
 
 App = None # created in main()
 
-# TODO adjust per platform
-CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', 'sawsc')
-
 service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
                 s in sorted(os.listdir(os.path.join(os.path.dirname(
                                     os.path.realpath(__file__)), 'service')))
@@ -107,6 +104,11 @@ class AppOptions:
     def active_theme(self, val):
         self._active_theme = val
         ttk.Style(self.active_theme)
+
+    @property
+    def config_dir(self):
+        # TODO adjust per platform
+        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc')
 
     @property
     def config_file(self):
