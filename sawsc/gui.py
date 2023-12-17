@@ -46,6 +46,9 @@ PADDING = 5
 
 App = None # created in main()
 
+# TODO adjust per platform
+CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.config', 'sawsc')
+
 service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
                 s in sorted(os.listdir(os.path.join(os.path.dirname(
                                     os.path.realpath(__file__)), 'service')))
@@ -76,8 +79,7 @@ class AppOptions:
 
     @property
     def config_file(self):
-        # TODO adjust per platform
-        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc', 'config.json')
+        return os.path.join(CONFIG_DIR, 'config.json')
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
