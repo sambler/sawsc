@@ -37,6 +37,7 @@ import json
 import os
 import sawsc
 import sys
+import threading as thr
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import Messagebox as mb
@@ -54,6 +55,33 @@ service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
                                     os.path.realpath(__file__)), 'service')))
                 if s not in ['__init__.py', '__pycache__']
                 }
+
+class tspinner(ttk.Label):
+    def __init__(self, par, **kwargs):
+        super().__init__(par, **kwargs)
+        self.frames = '-\|/'
+        self.running = False
+        self.pos = 0
+        self.active_cons = 0
+
+    def start(self):
+        self.active_cons += 1
+        if not self.running: self.after(300, self.progress)
+        self.running = True
+
+    def progress(self):
+        if self.active_cons < 1: self.running = False
+        if not self.running:
+            self['text'] = ''
+            return
+        self.pos += 1
+        if self.pos >= len(self.frames): self.pos = 0
+        #self['text'] = str(self.active_cons) + ' ' + self.frames[self.pos]
+        self['text'] = self.frames[self.pos]
+        self.after(300, self.progress)
+
+    def stop(self):
+        self.active_cons -= 1
 
 
 class AppOptions:
@@ -163,13 +191,95 @@ class SawscPrefs(tk.Toplevel):
         self.destroy()
 
 
+class SawscRegions(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.title('AWS Regions')
+        self.geometry('300x600')
+        self.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.bind('<F5>', self.refresh)
+        self.show_all = tk.BooleanVar()
+        self.show_all.set=(False)
+        self.show_check = ttk.Checkbutton(self, variable=self.show_all,
+                                    text='Show all', command=self.refresh)
+        self.show_check.grid(row=0, column=0, sticky=tk.W, padx=PADDING, pady=PADDING)
+        self.progress = tspinner(self)
+        self.progress.grid(row=0, column=1, sticky=tk.E, padx=PADDING)
+        self.tree = ScrolledFrame(self)
+        self.tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW)
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.refresh()
+
+    def refresh(self, evnt=None):
+        for w in self.tree.winfo_children():
+            w.destroy()
+        self.show_check['state'] = tk.DISABLED
+        t=thr.Thread(target=self.refresh_thread)
+        t.daemon = True
+        self.progress.start()
+        t.start()
+
+    def refresh_thread(self):
+        ZONE_INDENT = 5
+        ec2 = boto3.client('ec2')
+        regions = ec2.describe_regions(AllRegions=self.show_all.get())
+        for r_row,rgn in enumerate(sorted(regions['Regions'], key=lambda k: k['RegionName'])):
+            f = ttk.Frame(self.tree)
+            f.grid(row=r_row*2, column=0, sticky=tk.NSEW)
+            l = ttk.Label(f, text=rgn['RegionName'])
+            l.grid(row=0, column=0, sticky=tk.NW, padx=PADDING)
+            if rgn['OptInStatus'] not in ['opted-in', 'opt-in-not-required', ]:
+                l = ttk.Label(f, text=rgn['OptInStatus'])
+                l.grid(row=0, column=1, sticky=tk.W, padx=PADDING)
+            try:
+                z = ttk.Frame(f)
+                z.grid(row=(r_row*2)+1, column=0, columnspan=3, sticky=tk.NW)
+                zec2 = boto3.client('ec2', region_name=rgn['RegionName'])
+                avail_zones = zec2.describe_availability_zones(
+                                    AllAvailabilityZones=self.show_all.get())
+                for z_row,zone in enumerate(sorted(avail_zones['AvailabilityZones'],
+                                                key = lambda k: k['ZoneName'])):
+                    l = ttk.Label(z, text='', width=ZONE_INDENT)
+                    l.grid(row=z_row, column=0)
+                    l = ttk.Label(z, text=zone['ZoneName'])
+                    l.grid(row=z_row, column=1, sticky=tk.NW, padx=PADDING)
+                    if zone['State'] not in ['available', 'information']:
+                        l = ttk.Label(z, text=zone['State'])
+                        l.grid(row=z_row, column=2, sticky=tk.W, padx=PADDING)
+            except:
+                l = ttk.Label(z, text='', width=ZONE_INDENT)
+                l.grid(row=0, column=0)
+                l = ttk.Label(z, text='Unavailable')
+                l.grid(row=0, column=1, sticky=tk.NW, padx=PADDING)
+        self.progress.stop()
+        self.show_check['state'] = tk.NORMAL
+
+    def close_window(self, evnt=None):
+        App.after(100, App.check_windows())
+        self.destroy()
+
+
+class SawscEC2Types(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.title('AWS EC2 Types')
+        self.protocol("WM_DELETE_WINDOW", self.close_window)
+        l = ttk.Label(self, text='List of types here.')
+        l.grid(row=0, column=0, padx=PADDING, pady=PADDING)
+
+    def close_window(self, evnt=None):
+        App.after(100, App.check_windows())
+        self.destroy()
+
+
 class SawscGUI(tk.Toplevel):
     def __init__(self):
         global Opts
         super().__init__()
         self.title('Sawsc')
         self.minsize(width=500, height=400)
-        self.geometry('800x800')
+        self.geometry('850x850')
         self.develop_notice = None
         self.active_choice = tk.StringVar()
         self.active_choice.set(App.opts.active_choice.get())
@@ -197,6 +307,12 @@ class SawscGUI(tk.Toplevel):
         self.filemenu.add_command(label='Quit',
                 command=self.quitkey, accelerator='Ctrl+Q')
         self.mainmenu.add_cascade(label='File', menu=self.filemenu)
+
+        # info
+        self.infomenu = tk.Menu(self.mainmenu, tearoff=0)
+        self.infomenu.add_command(label='Regions', command=self.menu_info_regions)
+        self.infomenu.add_command(label='EC2 Types', command=self.menu_info_ec2_types)
+        self.mainmenu.add_cascade(label='Info', menu=self.infomenu)
 
         # Help
         self.helpmenu = tk.Menu(self.mainmenu, tearoff=0)
@@ -254,6 +370,12 @@ class SawscGUI(tk.Toplevel):
     def menu_close_window(self, evnt=None):
         App.after(100, App.check_windows())
         self.destroy()
+
+    def menu_info_regions(self, evnt=None):
+        w = SawscRegions()
+
+    def menu_info_ec2_types(self, evnt=None):
+        w = SawscEC2Types()
 
     def quitkey(self, evnt=None):
         App.quit_app()
