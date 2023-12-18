@@ -366,6 +366,7 @@ class SawscGUI(tk.Toplevel):
         self.bind('<Control-n>', self.menu_new_window)
         self.bind('<Control-q>', self.quitkey)
         self.bind('<Control-w>', self.menu_close_window)
+        self.bind('<F5>', self.change_service)
         self.protocol("WM_DELETE_WINDOW", self.menu_close_window)
         self.add_menus()
         self.layout()
