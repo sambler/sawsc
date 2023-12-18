@@ -171,6 +171,7 @@ class ListFrame(ListBase):
             except Exception as e:
                 print(e)
             w.destroy()
+            self.after(1000, self.refresh())
 
         def restart():
             ec2.reboot_instances(InstanceIds=[inst_id])
