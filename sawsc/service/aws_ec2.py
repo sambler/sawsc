@@ -18,6 +18,31 @@ class States:
     STOPPING = 64
     STOPPED = 80
 
+# types lists - valid aws type to use is [0] from split by space
+ARM_TYPES = [
+    'c7g.large - 2cpu arm 4G',
+    'r7g.16xlarge - 64cpu arm 512G',
+    ]
+
+X86_TYPES = [
+    't3a.nano - 2cpu 0.5G',
+    't3a.micro - 2cpu 1G',
+    't3a.small - 2cpu 2G',
+    't3a.medium - 2cpu 4G',
+    't3a.large - 2cpu 8G',
+    't3a.xlarge - 4cpu 16G',
+    'c6a.4xlarge - 16cpu 32G',
+    'm5a.4xlarge - 16cpu 64G',
+    'r6a.4xlarge - 16cpu 128G',
+    'm6a.16xlarge - 64cpu 256G',
+    'r6a.16xlarge - 64cpu 512G',
+    'm6a.32xlarge - 128cpu 512G',
+    'r6a.32xlarge - 128cpu 1024G',
+    'c6a.48xlarge - 192cpu 384G',
+    'r6a.48xlarge - 192cpu 1536G',
+    ]
+
+
 name = 'EC2'
 
 ec2 = boto3.client('ec2')
@@ -54,7 +79,9 @@ class ListFrame(ListBase):
 
                     # type
                     l = ttk.Button(item, text=i['InstanceType'], bootstyle='link',
-                                command=lambda tx=i['InstanceType']: self.copy_to_clip(tx))
+                                command=lambda iid=i['InstanceId'],
+                                        it=i['InstanceType'], ia=i['Architecture']:
+                                    self.change_type(iid, it, ia))
                     l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
                     tt = ToolTip(l, text='Instance Type')
 
@@ -210,4 +237,45 @@ class ListFrame(ListBase):
         # force stop
         b = ttk.Button(bf, text='Force Stop', command=force_stop, bootstyle='danger-outline')
         b.grid(row=40, column=1, sticky=tk.EW,  padx=PADDING, pady=PADDING)
+
+
+    def change_type(self, inst_id, inst_type, inst_arch):
+        w = tk.Toplevel(self)
+        w.title('Change Type to:')
+        w.resizable(0,0)
+
+        l = ttk.Label(w, text='Instance:')
+        l.grid(row=0, column=0, sticky=tk.E, padx=PADDING)
+        l = ttk.Label(w, text=inst_id)
+        l.grid(row=0, column=1, sticky=tk.W, padx=PADDING)
+
+        l = ttk.Label(w, text='Current Type:')
+        l.grid(row=1, column=0, sticky=tk.E, padx=PADDING)
+        l = ttk.Label(w, text=inst_type)
+        l.grid(row=1, column=1, sticky=tk.W, padx=PADDING)
+
+        l = ttk.Label(w, text='Change to:')
+        l.grid(row=2, column=0, sticky=tk.E, padx=PADDING)
+        if inst_arch == 'x86_64':
+            type_options = X86_TYPES
+        elif inst_arch == 'arm64':
+            type_options = ARM_TYPES
+        else:
+            type_options = ['Unknown arch']
+        target_type = tk.StringVar()
+        target_type.set([t for t in type_options if t.startswith(inst_type)][0])
+        cb = ttk.Combobox(w, textvariable=target_type, values=type_options, width=30)
+        cb.grid(row=2, column=1, sticky=tk.W, padx=PADDING)
+
+        def make_change():
+            if target_type.get() not in ARM_TYPES + X86_TYPES:
+                print('nope')
+                return
+            ec2.modify_instance_attribute(InstanceId=inst_id,
+                            InstanceType={'Value': target_type.get().split(' ')[0]})
+            w.destroy()
+            self.refresh()
+
+        b = ttk.Button(w, text='Change', command=make_change)
+        b.grid(row=999, column=1, sticky=tk.E, padx=PADDING, pady=PADDING)
 
