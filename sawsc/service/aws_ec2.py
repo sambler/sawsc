@@ -198,7 +198,7 @@ class ListFrame(ListBase):
             except Exception as e:
                 print(e)
             w.destroy()
-            self.after(1000, self.refresh())
+            self.after(5000, self.refresh())
 
         def restart():
             ec2.reboot_instances(InstanceIds=[inst_id])
@@ -274,7 +274,7 @@ class ListFrame(ListBase):
             ec2.modify_instance_attribute(InstanceId=inst_id,
                             InstanceType={'Value': target_type.get().split(' ')[0]})
             w.destroy()
-            self.refresh()
+            self.after(5000, self.refresh())
 
         b = ttk.Button(w, text='Change', command=make_change)
         b.grid(row=999, column=1, sticky=tk.E, padx=PADDING, pady=PADDING)
