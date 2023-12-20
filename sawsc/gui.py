@@ -439,7 +439,7 @@ class SawscGUI(tk.Toplevel):
             App.opts.save()
 
     def about_me(self, evnt=None):
-        mb.ok('Setup and manage AWS resources.', title='About')
+        mb.ok('Setup and manage AWS resources.', title='About', parent = self)
 
     def menu_preferences(self, evnt=None):
         w = SawscPrefs(self)
