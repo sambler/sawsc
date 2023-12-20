@@ -94,6 +94,8 @@ class AppOptions:
         self.remember_service = tk.BooleanVar()
         self.remember_service.set(False)
         self.aws_customer_id = tk.StringVar()
+        self.terminal = tk.StringVar()
+        self.known_keys = {}
         self.load()
 
     @property
@@ -116,8 +118,10 @@ class AppOptions:
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
-                'State': {'service': 'aws_ec2', 'remember': False},
-                'Accounts': {'aws_customer_id': '123465'},
+                'State': {'service': 'aws_ec2', 'remember': False,},
+                'Accounts': {'aws_customer_id': '123465',},
+                'Options': {'terminal': 'xterm',},
+                'SSH_keys': {}, # as - inst_id: key_path
                 }
 
     def save(self):
@@ -126,6 +130,8 @@ class AppOptions:
         config['State']['service'] = self.active_choice.get()
         config['State']['remember'] = self.remember_service.get()
         config['Accounts']['aws_customer_id'] = self.aws_customer_id.get()
+        config['Options']['terminal'] = self.terminal.get()
+        config['SSH_keys'] = self.known_keys
         if not os.path.exists(os.path.dirname(self.config_file)):
             os.makedirs(os.path.dirname(self.config_file))
         with open(self.config_file, 'w') as conf_file:
@@ -139,12 +145,15 @@ class AppOptions:
         if 'Appearance' not in config: config['Appearance'] = {}
         if 'State' not in config: config['State'] = {}
         if 'Accounts' not in config: config['Accounts'] = {}
+        if 'Options' not in config: config['Options'] = {}
         self.active_theme = config['Appearance'].get('theme', 'darkly')
         ttk.Style(self.active_theme)
         self.remember_service.set(config['State'].get('remember', False))
         if self.remember_service.get():
             self.active_choice.set(config['State'].get('service', 'aws_ec2'))
         self.aws_customer_id.set(config['Accounts'].get('aws_customer_id', '123456'))
+        self.terminal.set(config['Options'].get('terminal', 'xterm'))
+        self.known_keys = config.get('SSH_keys', {})
 
 
 class SawscPrefs(tk.Toplevel):
@@ -152,7 +161,6 @@ class SawscPrefs(tk.Toplevel):
         super().__init__(par, **kwargs)
         self.title('Sawsc Preferences')
         self.minsize(width=200, height=150)
-        self.grid()
         lbl = ttk.Label(self, text='')
         lbl.grid(row=0, column=0)
 
@@ -181,15 +189,59 @@ class SawscPrefs(tk.Toplevel):
         rs = ttk.Entry(self, textvariable=App.opts.aws_customer_id)
         rs.grid(row=40, column=1, sticky=tk.W)
 
+        lbl = ttk.Label(self, text='Terminal choice:')
+        lbl.grid(row=50, column=0, padx=3, sticky=tk.E)
+        known_terminals = ['gnome-terminal', 'xterm']
+        cb = ttk.Combobox(self, textvariable=App.opts.terminal, values=known_terminals)
+        cb.grid(row=50, column=1, sticky=tk.W)
+
+        lbl = ttk.Label(self, text='Instance SSH keys:')
+        lbl.grid(row=60, column=0, padx=3, sticky=tk.E)
+        b = ttk.Button(self, text='+', bootstyle='success-outline', command=self.add_key)
+        b.grid(row=60, column=1, sticky=tk.W, ipadx=0, ipady=0)
+        self.key_tbl = Tableview(self, coldata=['Instance ID', 'Key path'],
+                            rowdata=[[k,v] for k,v in App.opts.known_keys.items()],
+                            stripecolor=('#403f44', None))
+        self.key_tbl.grid(row=61, column=0, columnspan=2, sticky=tk.NSEW, padx=PADDING, pady=PADDING)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(61, weight=1)
+
         b = ttk.Button(self, text='Save', bootstyle='success', command=self.save)
         b.grid(row=900, column=1, sticky=tk.SE, padx=PADDING*2, pady=PADDING)
-        self.rowconfigure(900, weight=1)
 
     def change_dev(self, evnt=None):
         App.show_develop()
 
     def change_style(self, evnt=None):
         App.opts.active_theme = self.theme_choice.get()
+
+    def add_key(self, evnt=None):
+        w = tk.Toplevel(self)
+        w.title('Add SSH key')
+        w.minsize(200, 80)
+        w.columnconfigure(1, weight=1)
+        l = ttk.Label(w, text='Instance ID:')
+        l.grid(row=0, column=0, sticky=tk.E, padx=PADDING)
+        inst_entry = tk.StringVar()
+        e = ttk.Entry(w, textvariable=inst_entry)
+        e.grid(row=0, column=1, sticky=tk.EW, padx=PADDING)
+
+        l = ttk.Label(w, text='Key file path:')
+        l.grid(row=1, column=0, sticky=tk.E, padx=PADDING)
+        key_entry = tk.StringVar()
+        e = ttk.Entry(w, textvariable=key_entry)
+        e.grid(row=1, column=1, sticky=tk.EW, padx=PADDING)
+
+        def save_key():
+            App.opts.known_keys[inst_entry.get()] = key_entry.get()
+            App.opts.save()
+            self.key_tbl.delete_rows()
+            self.key_tbl.insert_rows('end', [[k,v] for k,v in App.opts.known_keys.items()])
+            self.key_tbl.reset_table()
+            w.destroy()
+
+        b = ttk.Button(w, text='Add', command=save_key)
+        b.grid(row=900, column=1, sticky=tk.E, padx=PADDING)
 
     def save(self, evnt=None):
         App.opts.save()

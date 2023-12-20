@@ -1,7 +1,9 @@
 
 import boto3
+import subprocess as sp
 import tkinter as tk
 import ttkbootstrap as ttk
+from ttkbootstrap.dialogs import Messagebox as mb
 from ttkbootstrap.tooltip import ToolTip
 
 from . import ListBase
@@ -51,9 +53,12 @@ class ListFrame(ListBase):
     def thr_get_data(self):
         response = ec2.describe_instances()
         self.clear_list()
+        self.instance_ips = {}
         while True:
             for resp in response['Reservations']:
                 for i in resp['Instances']:
+                    # fill in while listing net ifs
+                    self.instance_ips[i['InstanceId']] = {'ipv4': '', 'ipv6': '', 'dns': ''}
                     # if i['State']['Code'] > 255: # clear top byte ?
                     nt = self.tag_name(i)
                     if nt == '': nt = 'Unnamed'
@@ -117,15 +122,36 @@ class ListFrame(ListBase):
                     l.grid(row=2, column=2, sticky=tk.W, padx=PADDING)
                     tt = ToolTip(l, text='Name of SSH Key')
 
+                    # ssh into
+                    b = ttk.Button(item, text='start SSH', bootstyle='primary-outline')
+                    b.configure(command=lambda iid=i['InstanceId'], btn=b:
+                                        self.ssh_into(iid, btn=btn))
+                    b.grid(row=3, column=0, sticky=tk.W, padx=PADDING, pady=PADDING)
+                    tt = ToolTip(l, text='Open a terminal and start SSH to this server')
+                    if i['State']['Code'] != States.RUNNING:
+                        b['state'] = tk.DISABLED
+
+                    # key path
+                    if i['InstanceId'] in Opts.known_keys:
+                        l = ttk.Button(item,
+                                    text=Opts.known_keys[i['InstanceId']],
+                                    bootstyle='link',
+                                    command=lambda tx=Opts.known_keys[i['InstanceId']]:
+                                        self.copy_to_clip(tx))
+                        l.grid(row=3, column=2, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='Path to SSH Key')
+
                     # ip address
                     l = ttk.Label(item, text='Public IPv4:')
                     l.grid(row=20, column=0, sticky=tk.E)
                     if 'PublicIpAddress' in i:
+                        self.instance_ips[i['InstanceId']]['ipv4'] = i['PublicIpAddress']
                         l = ttk.Button(item, text=i['PublicIpAddress'], bootstyle='link',
                                     command=lambda tx=i['PublicIpAddress']: self.copy_to_clip(tx))
                         l.grid(row=20, column=1, sticky=tk.W, padx=PADDING)
                         tt = ToolTip(l, text='Public IPv4 Address')
                     if 'PublicDnsName' in i:
+                        self.instance_ips[i['InstanceId']]['dns'] = i['PublicDnsName']
                         l = ttk.Button(item, text=i['PublicDnsName'], bootstyle='link',
                                     command=lambda tx=i['PublicDnsName']: self.copy_to_clip(tx))
                         l.grid(row=20, column=2, sticky=tk.W, padx=PADDING)
@@ -163,6 +189,9 @@ class ListFrame(ListBase):
                         if 'Ipv6Addresses' in ni:
                             ipv6_frame = ttk.Frame(ni_frame)
                             ipv6_frame.grid(row=20, column=0, columnspan=5, sticky=tk.W)
+                            if len(ni['Ipv6Addresses']):
+                                self.instance_ips[i['InstanceId']]['ipv6'] = \
+                                                ni['Ipv6Addresses'][0]['Ipv6Address']
                             for row,ip6 in enumerate(ni['Ipv6Addresses']):
                                 l = ttk.Button(ipv6_frame, text=ip6['Ipv6Address'], bootstyle='link',
                                             command=lambda tx=ip6['Ipv6Address']: self.copy_to_clip(tx))
@@ -238,7 +267,6 @@ class ListFrame(ListBase):
         b = ttk.Button(bf, text='Force Stop', command=force_stop, bootstyle='danger-outline')
         b.grid(row=40, column=1, sticky=tk.EW,  padx=PADDING, pady=PADDING)
 
-
     def change_type(self, inst_id, inst_type, inst_arch):
         w = tk.Toplevel(self)
         w.title('Change Type to:')
@@ -278,4 +306,28 @@ class ListFrame(ListBase):
 
         b = ttk.Button(w, text='Change', command=make_change)
         b.grid(row=999, column=1, sticky=tk.E, padx=PADDING, pady=PADDING)
+
+    def ssh_into(self, inst_id, btn):
+        '''
+        scp -6 -o IdentitiesOnly=yes -i key_path ec2-user@\[xxxx\]:Downs/file ./
+        '''
+        key_path = ''
+        if inst_id in Opts.known_keys:
+            key_path = f'-i {Opts.known_keys[inst_id]}'
+        if self.instance_ips[inst_id]['ipv6'] != '':
+            ssh_cmd = f'''ssh -6 -o IdentitiesOnly=yes {key_path} ec2-user@{self.instance_ips[inst_id]['ipv6']}''' #+ ';exec ${SHELL} ' # to keep term open
+        elif self.instance_ips[inst_id]['dns'] != '':
+            ssh_cmd = f'ssh -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['dns']
+        elif self.instance_ips[inst_id]['ipv4'] != '':
+            ssh_cmd = f'ssh -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['ipv4']
+        else:
+            mb.ok('Unable to ssh without an ip address', title='No IP Address', parent=btn)
+            return
+        if Opts.develop.get(): print('cmd will be :-' + ssh_cmd)
+        if Opts.terminal.get() == 'gnome-terminal':
+            sp.Popen([Opts.terminal.get() , '--window', '--', 'sh', '-c', ssh_cmd])
+        elif Opts.terminal.get() == 'xterm':
+            sp.Popen([Opts.terminal.get() , '-e', ssh_cmd])
+        else:
+            mb.ok('Unknown shell choice.', title='Unknown Shell', parent=btn)
 
