@@ -165,7 +165,7 @@ class SawscPrefs(tk.Toplevel):
         lbl = ttk.Label(self, text='Theme:')
         lbl.grid(row=20, column=0, padx=3, sticky=tk.E)
         self.theme_choice = tk.StringVar()
-        self.theme_choice.set(App.opts.active_theme)
+        self.theme_choice.set(App.opts._active_theme)
         theme_options = [t for t in ttk.Style().theme_names()]
         cb = ttk.Combobox(self, textvariable=self.theme_choice, values=theme_options)
         cb.grid(row=20, column=1, sticky=tk.W)
