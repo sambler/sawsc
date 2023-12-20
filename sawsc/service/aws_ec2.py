@@ -88,7 +88,7 @@ class ListFrame(ListBase):
                                         it=i['InstanceType'], ia=i['Architecture']:
                                     self.change_type(iid, it, ia))
                     l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
-                    tt = ToolTip(l, text='Instance Type')
+                    tt = ToolTip(l, text='Instance Type.\nClick to change.')
 
                     # cores/arch
                     cpus = int(i['CpuOptions']['CoreCount']) * int(i['CpuOptions']['ThreadsPerCore'])
@@ -114,7 +114,7 @@ class ListFrame(ListBase):
                                 command=lambda iid=i['InstanceId'], istate=i['State']['Code'], iname=nt:
                                     self.change_state(iid, istate, iname))
                     l.grid(row=2, column=0, sticky=tk.W, padx=PADDING)
-                    tt = ToolTip(l, text='Instance state')
+                    tt = ToolTip(l, text='Instance state.\nClick to change.')
 
                     # key
                     l = ttk.Button(item, text=i['KeyName'], bootstyle='link',
@@ -127,7 +127,7 @@ class ListFrame(ListBase):
                     b.configure(command=lambda iid=i['InstanceId'], btn=b:
                                         self.ssh_into(iid, btn=btn))
                     b.grid(row=3, column=0, sticky=tk.W, padx=PADDING, pady=PADDING)
-                    tt = ToolTip(l, text='Open a terminal and start SSH to this server')
+                    tt = ToolTip(b, text='Open a terminal and start SSH to this server')
                     if i['State']['Code'] != States.RUNNING:
                         b['state'] = tk.DISABLED
 
