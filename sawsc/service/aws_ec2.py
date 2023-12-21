@@ -77,18 +77,24 @@ class ListFrame(ListBase):
                     tt = ToolTip(l, text='Instance ID')
 
                     # vpcid
-                    l = ttk.Button(item, text=i['VpcId'], bootstyle='link',
-                                command=lambda tx=i['VpcId']: self.copy_to_clip(tx))
-                    l.grid(row=0, column=2, sticky=tk.W, padx=PADDING)
-                    tt = ToolTip(l, text='VPC ID')
+                    if 'VpcId' in i:
+                        l = ttk.Button(item, text=i['VpcId'], bootstyle='link',
+                                    command=lambda tx=i['VpcId']: self.copy_to_clip(tx))
+                        l.grid(row=0, column=2, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='VPC ID')
 
                     # type
-                    l = ttk.Button(item, text=i['InstanceType'], bootstyle='link',
-                                command=lambda iid=i['InstanceId'],
-                                        it=i['InstanceType'], ia=i['Architecture']:
-                                    self.change_type(iid, it, ia))
-                    l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
-                    tt = ToolTip(l, text='Instance Type.\nClick to change.')
+                    if i['State']['Code'] == States.TERMINATED:
+                        l = ttk.Label(item, text=i['InstanceType'], bootstyle='danger')
+                        l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='Waiting for AWS to cleanup this resource.')
+                    else:
+                        l = ttk.Button(item, text=i['InstanceType'], bootstyle='link',
+                                    command=lambda iid=i['InstanceId'],
+                                            it=i['InstanceType'], ia=i['Architecture']:
+                                        self.change_type(iid, it, ia))
+                        l.grid(row=1, column=0, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='Instance Type.\nClick to change.')
 
                     # cores/arch
                     cpus = int(i['CpuOptions']['CoreCount']) * int(i['CpuOptions']['ThreadsPerCore'])
@@ -106,15 +112,22 @@ class ListFrame(ListBase):
                     tt = ToolTip(l, text='Availability zone')
 
                     # state
-                    if i['State']['Code'] != States.STOPPED:
+                    if i['State']['Code'] == States.TERMINATED:
+                        s_style = 'danger' # green
+                    elif i['State']['Code'] != States.STOPPED:
                         s_style = 'success-link' # green
                     else:
                         s_style = 'link'
-                    l = ttk.Button(item, text=i['State']['Name'], bootstyle=s_style,
-                                command=lambda iid=i['InstanceId'], istate=i['State']['Code'], iname=nt:
-                                    self.change_state(iid, istate, iname))
-                    l.grid(row=2, column=0, sticky=tk.W, padx=PADDING)
-                    tt = ToolTip(l, text='Instance state.\nClick to change.')
+                    if i['State']['Code'] == States.TERMINATED:
+                        l = ttk.Label(item, text=i['State']['Name'], bootstyle=s_style)
+                        l.grid(row=2, column=0, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='Waiting for AWS to cleanup this resource.')
+                    else:
+                        l = ttk.Button(item, text=i['State']['Name'], bootstyle=s_style,
+                                    command=lambda iid=i['InstanceId'], istate=i['State']['Code'], iname=nt:
+                                        self.change_state(iid, istate, iname))
+                        l.grid(row=2, column=0, sticky=tk.W, padx=PADDING)
+                        tt = ToolTip(l, text='Instance state.\nClick to change.')
 
                     # key
                     l = ttk.Button(item, text=i['KeyName'], bootstyle='link',
