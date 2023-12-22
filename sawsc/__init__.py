@@ -104,7 +104,7 @@ class CLIOptions:
         if not os.path.exists(os.path.dirname(self.config_file)):
             os.makedirs(os.path.dirname(self.config_file))
         with open(self.config_file, 'w') as conf_file:
-            conf_file.write(json.dumps(config, indent=4))
+            conf_file.write(json.dumps(config, indent=4)+'\n')
 
     def load(self):
         config = self.defaults()
