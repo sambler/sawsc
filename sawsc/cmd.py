@@ -32,11 +32,22 @@
 
 
 import argparse
+import boto3
 from os.path import join, exists, expanduser
+from pprint import pp
 import signal
+import subprocess as sp
 import sys
 
-from . import __version__ as vers
+from . import CLIOptions
+from .__version__ import __version__ as vers
+from .service.aws_ec2 import States
+
+Opts = CLIOptions()
+Opts.load()
+
+NAMELEN = 24
+
 
 def signal_handler(signal, frame):
     sys.exit(0)
@@ -46,27 +57,192 @@ signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGTSTP, signal_handler)
 
 
+def list_instances(ki):
+    for idx in sorted(ki):
+        kiip = ''
+        if ki[idx]['state'] == States.RUNNING:
+            kiip = ki[idx]['ip']
+            if len(ki[idx]['ipv6']):
+                for ip6 in ki[idx]['ipv6']:
+                    kiip += f' - {ip6}'
+        print(f'''{idx: 4d}: {ki[idx]['name'].ljust(NAMELEN, ' ')}'''
+                f''' - {ki[idx]['id']} - {ki[idx]['st_name']} {kiip}''')
+
+
 def main():
-    parser = argparse.ArgumentParser(description='''Sawsc.''')
-    parser.add_argument('--version', action='version', version='%(prog)s v'+vers.__version__)
+    ec2 = boto3.client('ec2')
+    known_instances = {}
+    run_count = 0
+
+    parser = argparse.ArgumentParser(description='''Sawsc. Basic EC2 operations.''')
+    parser.add_argument('--version', action='version', version='%(prog)s v'+vers)
     parser.add_argument('--debug', help='output debug info', action='store_true')
-    parser.add_argument('-c', '--config', help='Config file', type=str, default='./sawc.conf')
-    parser.add_argument('-s', '--show', help='Show plan of resources to create or modify', action='store_true')
-    parser.add_argument('-w', '--write', help='Send changes to AWS account', action='store_true')
+    parser.add_argument('-l', '--list', help='list all instances', action='store_true')
+    parser.add_argument('-r', '--run', help='start an instance', action='store_true')
+    parser.add_argument('-f', '--force', help='force reboot an instance', action='store_true')
+    parser.add_argument('-s', '--ssh', help='ssh into an instance', action='store_true')
+    parser.add_argument('-c', '--change', help='chnage instance type', action='store_true')
+    parser.add_argument('-k', '--key', help='ssh key file', type=str, default='')
+    parser.add_argument('ids', metavar='Id', type=str, nargs='*', help='Instance Id')
     args = parser.parse_args()
 
-    if args.config:
-        print(f'Using config file {args.config}')
+    if len(args.ids):
+        print('Starting:')
+        for i in args.ids:
+            print(i)
+        ec2.start_instances(InstanceIds=args.ids)
+        return
 
-    if args.show:
-        print('These are the additions and changes...')
+    response = ec2.describe_instances()
+    for r in response['Reservations']:
+        for i in r['Instances']:
+            # if i['State']['Code'] > 255: # clear top byte
+            k_idx = len(known_instances) + 1
+            known_instances[k_idx] = {  'state': i['State']['Code'],
+                                        'st_name': i['State']['Name'],
+                                        'id': i['InstanceId'],
+                                        'type': i['InstanceType'],
+                                        'name': '',
+                                        'dnsname': '',
+                                        'ip': '',
+                                        'ipv6': [],}
+            if 'Tags' in i:
+                for t in i['Tags']:
+                    if 'Key' in t and t['Key'] == 'Name':
+                        known_instances[k_idx]['name'] = t['Value']
 
-    if args.write:
-        print('Creating and adjusting resources...')
+            if i['State']['Code'] == States.RUNNING:
+                run_count += 1
+                for ni in i['NetworkInterfaces']:
+                    #pp(ni['Ipv6Addresses'])
+                    for i6 in ni['Ipv6Addresses']:
+                        known_instances[k_idx]['ipv6'] += [i6['Ipv6Address']]
+                known_instances[k_idx]['dnsname'] = i['PublicDnsName']
+                if 'PublicIpAddress' in i:
+                    known_instances[k_idx]['ip'] = i['PublicIpAddress']
 
-    print('That is all I do so far... still waiting...')
+    if len(known_instances) < 1:
+        print('No known ec2 instances.')
+        return
 
-    return 0
+    if args.list or not any(vars(args).values()):
+        list_instances(known_instances)
+        return
+
+    # do I want to renumber this list?
+    running_instances = {i: known_instances[i] for i in known_instances if known_instances[i]['state'] == States.RUNNING}
+
+    if args.run:
+        # only list stopped instances that we can start now
+        # do I want to renumber this list?
+        stopd_instances = {i: known_instances[i] for i in known_instances if known_instances[i]['state'] == States.STOPPED}
+        list_instances(stopd_instances)
+        try:
+            choice = int(input('Start: '))
+        except:
+            choice = 0
+        if choice > 0 and choice in stopd_instances:
+            if stopd_instances[choice]['state'] == States.RUNNING:
+                print(f'''{stopd_instances[choice]['name']} already running.''')
+                exit(2)
+            if stopd_instances[choice]['state'] == States.STOPPED:
+                print(f'''Starting {stopd_instances[choice]['name']}''')
+            else:
+                print(f'''Unable to start {stopd_instances[choice]['name']} while {stopd_instances[choice]['st_name']}''')
+                exit(2)
+            try:
+                ec2.start_instances(InstanceIds=[stopd_instances[choice]['id']])
+            except Exception as e:
+                print(e)
+        return
+
+    if args.force:
+        if run_count < 1:
+            print('No running instances.')
+            exit(3)
+        list_instances(running_instances)
+        try:
+            choice = int(input('Reboot: '))
+        except:
+            choice = 0
+        if choice > 0 and choice in running_instances:
+            ec2.reboot_instances(InstanceIds=[stopd_instances[choice]['id']])
+        return
+
+    if args.change:
+        for idx in sorted(known_instances):
+            c_state = ''
+            if known_instances[idx]['state'] != States.STOPPED:
+                c_state = f''' - {known_instances[idx]['st_name']}'''
+            print(f'''{idx: 4d}: {known_instances[idx]['name'].ljust(NAMELEN, ' ')} - {known_instances[idx]['type']} {c_state}''')
+        try:
+            choice = int(input('Change: '))
+        except:
+            print()
+            exit(4)
+
+        for i in range(len(instance_types)):
+            print(f'''{i: 4d}: {instance_types[i][0].ljust(13, ' ')} - {instance_types[i][1]}''')
+
+        try:
+            n_type = int(input(f'''Change {known_instances[choice]['name']} to: '''))
+        except:
+            print()
+            exit(4)
+
+        try:
+            print(f'''Changing {known_instances[choice]['name']} to {instance_types[n_type][0]}''')
+            ec2.modify_instance_attribute(
+                            InstanceId=known_instances[choice]['id'],
+                            InstanceType={'Value': instance_types[n_type][0]},
+                            )
+        except Exception as e:
+            print(e)
+            exit(4)
+
+        return
+
+    if args.ssh:
+        if run_count < 1:
+            print('No running instances.')
+            exit(5)
+        list_instances(running_instances)
+        try:
+            choice = int(input('ssh to: '))
+        except:
+            choice = 0
+        if choice > 0 and choice in running_instances:
+            if running_instances[choice]['state'] == States.RUNNING:
+                print(f'''Connecting to {running_instances[choice]['name']}...''')
+            else:
+                print(f'''{running_instances[choice]['name']} not running.''')
+                exit(5)
+            try:
+                if args.key:
+                    keyfile = args.key
+                else:
+                    if running_instances[choice]['id'] in Opts.known_keys:
+                        keyfile = Opts.known_keys[running_instances[choice]['id']]
+                    else:
+                        keyfile = '~/.ssh/aws_bb_sydney'
+                if len(running_instances[choice]['ipv6']):
+                    sh_args = ['ssh', '-6',
+                                '-i', keyfile,
+                                '-o ', 'IdentitiesOnly=yes',
+                                'ec2-user@'+running_instances[choice]['ipv6'][0]]
+                    if args.debug:
+                        sh_args.insert(1, '-vvv')
+                elif 'dnsname' in running_instances[choice]:
+                    sh_args = ['ssh',
+                                '-i', keyfile,
+                                '-o ', 'IdentitiesOnly=yes',
+                                'ec2-user@'+running_instances[choice]['dnsname']]
+                #pp(sargs)
+                sp.call(' '.join(sh_args), shell=True)
+            except Exception as e:
+                print(f'nope: {e}')
+        return
+
 
 if __name__ == '__main__':
     main()
