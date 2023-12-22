@@ -44,6 +44,7 @@ from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tableview import Tableview
 
 from . import hs, GUIOptions
+from .__version__ import __version__ as vers
 
 PADDING = 5
 
@@ -418,7 +419,7 @@ class SawscGUI(tk.Toplevel):
             App.opts.save()
 
     def about_me(self, evnt=None):
-        mb.ok('Setup and manage AWS resources.', title='About', parent = self)
+        mb.ok('Setup and manage AWS resources.', title='About SawsC v'+vers, parent = self)
 
     def menu_preferences(self, evnt=None):
         w = SawscPrefs(self)
