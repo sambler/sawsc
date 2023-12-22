@@ -33,7 +33,6 @@
 
 import boto3
 from importlib import import_module
-import json
 import os
 import sawsc
 import sys
@@ -44,7 +43,7 @@ from ttkbootstrap.dialogs import Messagebox as mb
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tableview import Tableview
 
-from . import hs
+from . import hs, GUIOptions
 
 PADDING = 5
 
@@ -85,78 +84,6 @@ class tspinner(ttk.Label):
         self.active_cons -= 1
 
 
-class AppOptions:
-    def __init__(self):
-        self.develop = tk.BooleanVar()
-        self.develop.set(False)
-        self._active_theme = 'darkly'
-        self.active_choice = tk.StringVar()
-        self.active_choice.set('aws_ec2')
-        self.remember_service = tk.BooleanVar()
-        self.remember_service.set(False)
-        self.aws_customer_id = tk.StringVar()
-        self.terminal = tk.StringVar()
-        self.known_keys = {}
-        self.load()
-
-    @property
-    def active_theme(self):
-        return self._active_theme
-
-    @active_theme.setter
-    def active_theme(self, val):
-        self._active_theme = val
-        ttk.Style(self.active_theme)
-
-    @property
-    def config_dir(self):
-        # TODO adjust per platform
-        return os.path.join(os.path.expanduser('~'), '.config', 'sawsc')
-
-    @property
-    def config_file(self):
-        return os.path.join(self.config_dir, 'config.json')
-
-    def defaults(self):
-        return {'Appearance': {'theme': 'darkly',},
-                'State': {'service': 'aws_ec2', 'remember': False,},
-                'Accounts': {'aws_customer_id': '123465',},
-                'Options': {'terminal': 'xterm',},
-                'SSH_keys': {}, # as - inst_id: key_path
-                }
-
-    def save(self):
-        config = self.defaults()
-        config['Appearance']['theme'] = self.active_theme
-        config['State']['service'] = self.active_choice.get()
-        config['State']['remember'] = self.remember_service.get()
-        config['Accounts']['aws_customer_id'] = self.aws_customer_id.get()
-        config['Options']['terminal'] = self.terminal.get()
-        config['SSH_keys'] = self.known_keys
-        if not os.path.exists(os.path.dirname(self.config_file)):
-            os.makedirs(os.path.dirname(self.config_file))
-        with open(self.config_file, 'w') as conf_file:
-            conf_file.write(json.dumps(config, indent=4))
-
-    def load(self):
-        config = self.defaults()
-        if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as conf_file:
-                config = json.loads(conf_file.read())
-        if 'Appearance' not in config: config['Appearance'] = {}
-        if 'State' not in config: config['State'] = {}
-        if 'Accounts' not in config: config['Accounts'] = {}
-        if 'Options' not in config: config['Options'] = {}
-        self.active_theme = config['Appearance'].get('theme', 'darkly')
-        ttk.Style(self.active_theme)
-        self.remember_service.set(config['State'].get('remember', False))
-        if self.remember_service.get():
-            self.active_choice.set(config['State'].get('service', 'aws_ec2'))
-        self.aws_customer_id.set(config['Accounts'].get('aws_customer_id', '123456'))
-        self.terminal.set(config['Options'].get('terminal', 'xterm'))
-        self.known_keys = config.get('SSH_keys', {})
-
-
 class SawscPrefs(tk.Toplevel):
     def __init__(self, par, **kwargs):
         super().__init__(par, **kwargs)
@@ -168,13 +95,13 @@ class SawscPrefs(tk.Toplevel):
         lbl = ttk.Label(self, text='Development:')
         lbl.grid(row=10, column=0, padx=3, sticky=tk.E)
         # store to allow test activate
-        self.dev_opt = ttk.Checkbutton(self, variable=App.opts.develop, command=self.change_dev)
+        self.dev_opt = ttk.Checkbutton(self, variable=App.opts._develop, command=self.change_dev)
         self.dev_opt.grid(row=10, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Theme:')
         lbl.grid(row=20, column=0, padx=3, sticky=tk.E)
         self.theme_choice = tk.StringVar()
-        self.theme_choice.set(App.opts.active_theme)
+        self.theme_choice.set(App.opts._active_theme)
         theme_options = [t for t in ttk.Style().theme_names()]
         cb = ttk.Combobox(self, textvariable=self.theme_choice, values=theme_options)
         cb.grid(row=20, column=1, sticky=tk.W)
@@ -182,18 +109,18 @@ class SawscPrefs(tk.Toplevel):
 
         lbl = ttk.Label(self, text='Remember service:')
         lbl.grid(row=30, column=0, padx=3, sticky=tk.E)
-        rs = ttk.Checkbutton(self, variable=App.opts.remember_service)
+        rs = ttk.Checkbutton(self, variable=App.opts._remember_service)
         rs.grid(row=30, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='AWS customer ID:')
         lbl.grid(row=40, column=0, padx=3, sticky=tk.E)
-        rs = ttk.Entry(self, textvariable=App.opts.aws_customer_id)
+        rs = ttk.Entry(self, textvariable=App.opts._aws_customer_id)
         rs.grid(row=40, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Terminal choice:')
         lbl.grid(row=50, column=0, padx=3, sticky=tk.E)
         known_terminals = ['gnome-terminal', 'xterm']
-        cb = ttk.Combobox(self, textvariable=App.opts.terminal, values=known_terminals)
+        cb = ttk.Combobox(self, textvariable=App.opts._terminal, values=known_terminals)
         cb.grid(row=50, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Instance SSH keys:')
@@ -414,7 +341,7 @@ class SawscGUI(tk.Toplevel):
         self.geometry('850x850')
         self.develop_notice = None
         self.active_choice = tk.StringVar()
-        self.active_choice.set(App.opts.active_choice.get())
+        self.active_choice.set(App.opts.active_choice)
         self.bind('<Control-n>', self.menu_new_window)
         self.bind('<Control-q>', self.quitkey)
         self.bind('<Control-w>', self.menu_close_window)
@@ -486,8 +413,8 @@ class SawscGUI(tk.Toplevel):
         service[self.active_choice.get()].PADDING = PADDING
         nview = service[self.active_choice.get()].ListFrame(self.info_view)
         nview.grid(row=0, column=1, sticky=tk.NSEW)
-        if App.opts.remember_service.get():
-            App.opts.active_choice.set(self.active_choice.get())
+        if App.opts.remember_service:
+            App.opts.active_choice = self.active_choice.get()
             App.opts.save()
 
     def about_me(self, evnt=None):
@@ -514,7 +441,7 @@ class SawscGUI(tk.Toplevel):
         App.quit_app()
 
     def show_develop(self, evnt=None):
-        if App.opts.develop.get():
+        if App.opts.develop:
             if self.develop_notice is None:
                 self.develop_notice = ttk.Label(self, text='DEVELOPMENT',
                         font=('Dejavu Sans', 12, 'bold'), foreground='red')
@@ -530,7 +457,8 @@ class AppWindow(tk.Tk):
     def __init__(self):
         global App
         super().__init__()
-        self.opts = AppOptions()
+        self.opts = GUIOptions()
+        self.opts.load()
         App = self
 
     def check_windows(self):
@@ -551,7 +479,7 @@ class AppWindow(tk.Tk):
         self.quit()
 
     def main(self, args=None):
-        self.opts.develop.set(('-d' in sys.argv) or ('--debug' in sys.argv))
+        self.opts.develop = ('-d' in sys.argv) or ('--debug' in sys.argv)
         fw = SawscGUI()
         fw.show_develop()
         return self.mainloop()
