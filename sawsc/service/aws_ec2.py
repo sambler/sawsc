@@ -354,7 +354,7 @@ class ListFrame(ListBase):
         cb.grid(row=2, column=1, sticky=tk.W, padx=PADDING)
 
         def make_change():
-            if target_type.get() not in ARM_TYPES + X86_TYPES:
+            if target_type.get() not in TYPE_CHOICES['x86'] + TYPE_CHOICES['arm'] + TYPE_CHOICES['gpu']:
                 print('nope')
                 return
             ec2.modify_instance_attribute(InstanceId=inst_id,
