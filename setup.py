@@ -32,10 +32,10 @@ REQUIRED = [
 
 # packages used during tests
 TEST_EXTRAS = [
-    'pytest',
-    'pytest-cov',
-    'coverage',
-    'tox',
+    #'pytest',
+    #'pytest-cov',
+    #'coverage',
+    #'tox',
     #'codetiming',
 ]
 
