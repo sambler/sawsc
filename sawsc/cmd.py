@@ -83,7 +83,7 @@ def main():
     parser.add_argument('-s', '--ssh', help='ssh into an instance', action='store_true')
     parser.add_argument('-c', '--change', help='chnage instance type', action='store_true')
     parser.add_argument('-k', '--key', help='ssh key file', type=str, default='')
-    parser.add_argument('ids', metavar='Id', type=str, nargs='*', help='Instance Id')
+    parser.add_argument('ids', metavar='Id', type=str, nargs='*', help='Instance Id/s to start')
     args = parser.parse_args()
 
     if len(args.ids):
