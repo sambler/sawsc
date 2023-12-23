@@ -15,7 +15,7 @@ ec2 = boto3.client('ec2')
 
 class ListFrame(ListBase):
     def thr_get_data(self):
-        vpcs = ec2.describe_snapshots(OwnerIds=[Opts.aws_customer_id.get()])
+        vpcs = ec2.describe_snapshots(OwnerIds=[Opts.aws_customer_id])
         self.clear_list()
         while True:
             for s in vpcs['Snapshots']:
