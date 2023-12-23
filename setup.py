@@ -21,13 +21,13 @@ URL = 'https://github.com/sambler/sawsc'
 EMAIL = 'develop@shaneware.biz'
 AUTHOR = 'Shane Ambler'
 REQUIRES_PYTHON = '>=3.8.0'
-VERSION = '0.1.0'
+VERSION = '1.0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    #'cython',
-    'tkinter',
     'boto3',
+    'tkinter',
+    'ttkbootstrap',
 ]
 
 # packages used during tests
@@ -142,7 +142,8 @@ setup(
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.org/classifiers/
-        'Development Status :: 1 - Planning',
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
         'Environment :: X11 Applications',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
