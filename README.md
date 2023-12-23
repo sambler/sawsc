@@ -25,4 +25,4 @@ sawsc --help
 
 You can run `sawsc` and get a list of known ec2 instances (same as using the -l option). `sawsc i-012301230123` will startup the instance id, or you can `sawsc -r` and then choose the instance from the list.
 
-Currently you can setup ssh key paths using the gui. For the cli you can manually enter then into the config file, which is json dict with `SSH_keys` as a dict containing `instance_id: key_path`
+Currently you can setup ssh key paths using the gui. For the cli you can manually enter then into the config file, which is a json dict with `SSH_keys` as a dict containing `instance_id: key_path`
