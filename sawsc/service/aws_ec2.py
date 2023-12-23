@@ -52,28 +52,39 @@ class States:
     STOPPED = 80
 
 # types lists - valid aws type to use is [0] from split by space
-ARM_TYPES = [
-    'c7g.large - 2cpu arm 4G',
-    'r7g.16xlarge - 64cpu arm 512G',
-    ]
+# only a personal selection here
+TYPE_CHOICES = {
+    'arm': [
+        'c7g.large - 2cpu arm 4G',
+        'r7g.16xlarge - 64cpu arm 512G',
+        ],
 
-X86_TYPES = [
-    't3a.nano - 2cpu 0.5G',
-    't3a.micro - 2cpu 1G',
-    't3a.small - 2cpu 2G',
-    't3a.medium - 2cpu 4G',
-    't3a.large - 2cpu 8G',
-    't3a.xlarge - 4cpu 16G',
-    'c6a.4xlarge - 16cpu 32G',
-    'm5a.4xlarge - 16cpu 64G',
-    'r6a.4xlarge - 16cpu 128G',
-    'm6a.16xlarge - 64cpu 256G',
-    'r6a.16xlarge - 64cpu 512G',
-    'm6a.32xlarge - 128cpu 512G',
-    'r6a.32xlarge - 128cpu 1024G',
-    'c6a.48xlarge - 192cpu 384G',
-    'r6a.48xlarge - 192cpu 1536G',
-    ]
+    'x86': [
+        't3a.nano - 2cpu 0.5G',
+        't3a.micro - 2cpu 1G',
+        't3a.small - 2cpu 2G',
+        't3a.medium - 2cpu 4G',
+        't3a.large - 2cpu 8G',
+        't3a.xlarge - 4cpu 16G',
+        'c6a.4xlarge - 16cpu 32G',
+        'm5a.4xlarge - 16cpu 64G',
+        'r6a.4xlarge - 16cpu 128G',
+        'm6a.16xlarge - 64cpu 256G',
+        'r6a.16xlarge - 64cpu 512G',
+        'm6a.32xlarge - 128cpu 512G',
+        'r6a.32xlarge - 128cpu 1024G',
+        'c6a.48xlarge - 192cpu 384G',
+        'r6a.48xlarge - 192cpu 1536G',
+        ],
+
+    'gpu': [
+        'g5.xlarge - 4cpu 16G +GPU',
+        'g5.2xlarge - 8cpu 32G +GPU',
+        'g5.4xlarge - 16cpu 64G +GPU',
+        ],
+
+    'mac': [], # TODO find some mac choices
+    }
 
 
 name = 'EC2'
@@ -329,9 +340,12 @@ class ListFrame(ListBase):
         l = ttk.Label(w, text='Change to:')
         l.grid(row=2, column=0, sticky=tk.E, padx=PADDING)
         if inst_arch == 'x86_64':
-            type_options = X86_TYPES
+            if inst_type.startswith('g5'):
+                type_options = TYPE_CHOICES['gpu']
+            else:
+                type_options = TYPE_CHOICES['x86']
         elif inst_arch == 'arm64':
-            type_options = ARM_TYPES
+            type_options = TYPE_CHOICES['arm']
         else:
             type_options = ['Unknown arch']
         target_type = tk.StringVar()

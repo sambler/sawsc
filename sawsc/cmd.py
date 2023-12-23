@@ -41,7 +41,7 @@ import sys
 
 from . import CLIOptions
 from .__version__ import __version__ as vers
-from .service.aws_ec2 import States
+from .service.aws_ec2 import States, TYPE_CHOICES
 
 Opts = CLIOptions()
 Opts.load()
@@ -102,6 +102,7 @@ def main():
                                         'st_name': i['State']['Name'],
                                         'id': i['InstanceId'],
                                         'type': i['InstanceType'],
+                                        'arch': i['Architecture'],
                                         'name': '',
                                         'dnsname': '',
                                         'ip': '',
@@ -166,7 +167,7 @@ def main():
         except:
             choice = 0
         if choice > 0 and choice in running_instances:
-            ec2.reboot_instances(InstanceIds=[stopd_instances[choice]['id']])
+            ec2.reboot_instances(InstanceIds=[known_instances[choice]['id']])
         return
 
     if args.change:
@@ -181,8 +182,17 @@ def main():
             print()
             exit(4)
 
-        for i in range(len(instance_types)):
-            print(f'''{i: 4d}: {instance_types[i][0].ljust(13, ' ')} - {instance_types[i][1]}''')
+        if known_instances[choice]['arch'] in ['i386', 'x86_64']:
+            if known_instances[choice]['type'].startswith('g5'):
+                avail_instances = TYPE_CHOICES['gpu']
+            else:
+                avail_instances = TYPE_CHOICES['x86']
+        elif known_instances[choice]['arch'] in ['arm64',]:
+            avail_instances = TYPE_CHOICES['arm']
+        elif known_instances[choice]['arch'] in ['x86_64_mac','arm64_mac']:
+            avail_instances = TYPE_CHOICES['mac']
+        for i in range(len(avail_instances)):
+            print(f'''{i: 4d}: {avail_instances[i]}''')
 
         try:
             n_type = int(input(f'''Change {known_instances[choice]['name']} to: '''))
@@ -191,10 +201,10 @@ def main():
             exit(4)
 
         try:
-            print(f'''Changing {known_instances[choice]['name']} to {instance_types[n_type][0]}''')
+            print(f'''Changing {known_instances[choice]['name']} to {avail_instances[n_type].split(' ')[0]}''')
             ec2.modify_instance_attribute(
                             InstanceId=known_instances[choice]['id'],
-                            InstanceType={'Value': instance_types[n_type][0]},
+                            InstanceType={'Value': avail_instances[n_type].split(' ')[0]},
                             )
         except Exception as e:
             print(e)
