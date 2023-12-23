@@ -328,19 +328,21 @@ class ListFrame(ListBase):
         if inst_id in Opts.known_keys:
             key_path = f'-i {Opts.known_keys[inst_id]}'
         if self.instance_ips[inst_id]['ipv6'] != '':
-            ssh_cmd = f'''ssh -6 -o IdentitiesOnly=yes {key_path} ec2-user@{self.instance_ips[inst_id]['ipv6']}''' #+ ';exec ${SHELL} ' # to keep term open
+            ssh_cmd = f'''ssh -t -6 -o IdentitiesOnly=yes {key_path} ec2-user@{self.instance_ips[inst_id]['ipv6']}''' #+ ';exec ${SHELL} ' # to keep term open
         elif self.instance_ips[inst_id]['dns'] != '':
-            ssh_cmd = f'ssh -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['dns']
+            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['dns']
         elif self.instance_ips[inst_id]['ipv4'] != '':
-            ssh_cmd = f'ssh -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['ipv4']
+            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['ipv4']
         else:
             mb.ok('Unable to ssh without an ip address', title='No IP Address', parent=btn)
             return
-        if Opts.develop.get(): print('cmd will be :-' + ssh_cmd)
-        if Opts.terminal.get() == 'gnome-terminal':
-            sp.Popen([Opts.terminal.get() , '--window', '--', 'sh', '-c', ssh_cmd])
-        elif Opts.terminal.get() == 'xterm':
-            sp.Popen([Opts.terminal.get() , '-e', ssh_cmd])
+        if Opts.run_tmux:
+            ssh_cmd += ' tmux'
+        if Opts.develop: print('cmd will be :-' + ssh_cmd)
+        if Opts.terminal == 'gnome-terminal':
+            sp.Popen([Opts.terminal , '--window', '--', 'sh', '-c', ssh_cmd])
+        elif Opts.terminal == 'xterm':
+            sp.Popen([Opts.terminal , '-e', ssh_cmd])
         else:
             mb.ok('Unknown shell choice.', title='Unknown Shell', parent=btn)
 

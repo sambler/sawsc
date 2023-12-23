@@ -71,8 +71,9 @@ class CLIOptions:
         self.develop = False
         self.active_theme = 'darkly'
         self.active_choice = 'aws_ec2'
-        self.remember_service = False
         self.aws_customer_id = ''
+        self.remember_service = False
+        self.run_tmux = True
         self.terminal = ''
         self.known_keys = {}
 
@@ -87,7 +88,10 @@ class CLIOptions:
 
     def defaults(self):
         return {'Appearance': {'theme': 'darkly',},
-                'State': {'service': 'aws_ec2', 'remember': False,},
+                'State': {  'service': 'aws_ec2',
+                            'remember': False,
+                            'run_tmux': True,
+                            },
                 'Accounts': {'aws_customer_id': '123465',},
                 'Options': {'terminal': 'xterm',},
                 'SSH_keys': {}, # as - inst_id: key_path
@@ -98,6 +102,7 @@ class CLIOptions:
         config['Appearance']['theme'] = self.active_theme
         config['State']['service'] = self.active_choice
         config['State']['remember'] = self.remember_service
+        config['State']['run_tmux'] = self.run_tmux
         config['Accounts']['aws_customer_id'] = self.aws_customer_id
         config['Options']['terminal'] = self.terminal
         config['SSH_keys'] = self.known_keys
@@ -119,6 +124,7 @@ class CLIOptions:
         self.remember_service = config['State'].get('remember', False)
         if self.remember_service:
             self.active_choice = config['State'].get('service', 'aws_ec2')
+        self.run_tmux = config['State'].get('run_tmux', True)
         self.aws_customer_id = config['Accounts'].get('aws_customer_id', '123456')
         self.terminal = config['Options'].get('terminal', 'xterm')
         self.known_keys = config.get('SSH_keys', {})
@@ -138,6 +144,8 @@ class GUIOptions(CLIOptions):
         self._active_choice.set('aws_ec2')
         self._remember_service = tk.BooleanVar()
         self._remember_service.set(False)
+        self._run_tmux = tk.BooleanVar()
+        self._run_tmux.set(True)
         self._aws_customer_id = tk.StringVar()
         self._terminal = tk.StringVar()
         self.known_keys = {}
@@ -191,3 +199,12 @@ class GUIOptions(CLIOptions):
     @remember_service.setter
     def remember_service(self, val):
         self._remember_service.set(val)
+
+    @property
+    def run_tmux(self):
+        return self._run_tmux.get()
+
+    @run_tmux.setter
+    def run_tmux(self, val):
+        self._run_tmux.set(val)
+

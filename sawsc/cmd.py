@@ -225,18 +225,23 @@ def main():
                         keyfile = Opts.known_keys[running_instances[choice]['id']]
                     else:
                         keyfile = '~/.ssh/aws_bb_sydney'
+                cmd = ''
+                if Opts.run_tmux:
+                    cmd = 'tmux'
                 if len(running_instances[choice]['ipv6']):
-                    sh_args = ['ssh', '-6',
+                    sh_args = ['ssh', '-6', '-t',
                                 '-i', keyfile,
                                 '-o ', 'IdentitiesOnly=yes',
-                                'ec2-user@'+running_instances[choice]['ipv6'][0]]
+                                'ec2-user@'+running_instances[choice]['ipv6'][0],
+                                cmd]
                     if args.debug:
                         sh_args.insert(1, '-vvv')
                 elif 'dnsname' in running_instances[choice]:
-                    sh_args = ['ssh',
+                    sh_args = ['ssh', '-t',
                                 '-i', keyfile,
                                 '-o ', 'IdentitiesOnly=yes',
-                                'ec2-user@'+running_instances[choice]['dnsname']]
+                                'ec2-user@'+running_instances[choice]['dnsname'],
+                                cmd]
                 #pp(sargs)
                 sp.call(' '.join(sh_args), shell=True)
             except Exception as e:

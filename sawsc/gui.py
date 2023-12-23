@@ -124,6 +124,11 @@ class SawscPrefs(tk.Toplevel):
         cb = ttk.Combobox(self, textvariable=App.opts._terminal, values=known_terminals)
         cb.grid(row=50, column=1, sticky=tk.W)
 
+        lbl = ttk.Label(self, text='Start tmux with SSH:')
+        lbl.grid(row=55, column=0, padx=3, sticky=tk.E)
+        cb = ttk.Checkbutton(self, variable=App.opts._run_tmux)
+        cb.grid(row=55, column=1, sticky=tk.W)
+
         lbl = ttk.Label(self, text='Instance SSH keys:')
         lbl.grid(row=60, column=0, padx=3, sticky=tk.E)
         b = ttk.Button(self, text='+', bootstyle='success-outline', command=self.add_key)
