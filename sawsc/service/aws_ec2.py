@@ -93,6 +93,10 @@ ec2 = boto3.client('ec2')
 
 class ListFrame(ListBase):
     def thr_get_data(self):
+        response = ec2.describe_security_groups()
+        sec_grp_names = {}
+        for g in response['SecurityGroups']:
+            sec_grp_names[g['GroupId']] = self.tag_name(g)
         response = ec2.describe_instances()
         self.clear_list()
         self.instance_ips = {}
@@ -261,9 +265,14 @@ class ListFrame(ListBase):
                                         command=lambda tx=sg['GroupId']: self.copy_to_clip(tx))
                             l.grid(row=row, column=0, sticky=tk.E)
                             tt = ToolTip(l, text='Security group ID')
+                            sg_tag_name = sec_grp_names[sg['GroupId']]
+                            l = ttk.Button(sg_frame, text=sg_tag_name, bootstyle='link',
+                                        command=lambda tx=sg_tag_name: self.copy_to_clip(tx))
+                            l.grid(row=row, column=1, sticky=tk.W)
+                            tt = ToolTip(l, text='Security group name tag')
                             l = ttk.Button(sg_frame, text=sg['GroupName'], bootstyle='link',
                                         command=lambda tx=sg['GroupName']: self.copy_to_clip(tx))
-                            l.grid(row=row, column=1, sticky=tk.W)
+                            l.grid(row=row, column=2, sticky=tk.W)
                             tt = ToolTip(l, text='Security group name')
 
             if 'NextToken' in response and response['NextToken'] is not None:
