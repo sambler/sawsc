@@ -55,7 +55,32 @@ class States:
 # only a personal selection here
 TYPE_CHOICES = {
     'arm': [
+        'c7g.medium - 1cpu arm 2G',
+        'm7g.medium - 1cpu arm 4G',
+        'r7g.medium - 1cpu arm 8G',
+
         'c7g.large - 2cpu arm 4G',
+        'm7g.large - 2cpu arm 8G',
+        'r7g.large - 2cpu arm 16G',
+
+        'c7g.xlarge - 4cpu arm 8G',
+        'm7g.xlarge - 4cpu arm 16G',
+        'r7g.xlarge - 4cpu arm 32G',
+
+        'c7g.2xlarge - 8cpu arm 16G',
+        'm7g.2xlarge - 8cpu arm 32G',
+        'r7g.2xlarge - 8cpu arm 64G',
+
+        'c7g.4xlarge - 16cpu arm 32G',
+        'm7g.4xlarge - 16cpu arm 64G',
+        'r7g.4xlarge - 16cpu arm 128G',
+
+        'c7g.8xlarge - 32cpu arm 64G',
+        'm7g.8xlarge - 32cpu arm 128G',
+        'r7g.8xlarge - 32cpu arm 256G',
+
+        'c7g.16xlarge - 64cpu arm 128G',
+        'm7g.16xlarge - 64cpu arm 256G',
         'r7g.16xlarge - 64cpu arm 512G',
         ],
 
@@ -65,16 +90,30 @@ TYPE_CHOICES = {
         't3a.small - 2cpu 2G',
         't3a.medium - 2cpu 4G',
         't3a.large - 2cpu 8G',
-        't3a.xlarge - 4cpu 16G',
-        'c6a.4xlarge - 16cpu 32G',
-        'm5a.4xlarge - 16cpu 64G',
-        'r6a.4xlarge - 16cpu 128G',
-        'm6a.16xlarge - 64cpu 256G',
-        'r6a.16xlarge - 64cpu 512G',
-        'm6a.32xlarge - 128cpu 512G',
-        'r6a.32xlarge - 128cpu 1024G',
-        'c6a.48xlarge - 192cpu 384G',
-        'r6a.48xlarge - 192cpu 1536G',
+
+        'c7a.2xlarge - 8cpu 16G',
+        'm7a.2xlarge - 8cpu 32G',
+        'r7a.2xlarge - 8cpu 64G',
+
+        'c7a.4xlarge - 16cpu 32G',
+        'm7a.4xlarge - 16cpu 64G',
+        'r7a.4xlarge - 16cpu 128G',
+
+        'c7a.8xlarge - 32cpu 64G',
+        'm7a.8xlarge - 32cpu 128G',
+        'r7a.8xlarge - 32cpu 256G',
+
+        'c7a.16xlarge - 64cpu 128G',
+        'm7a.16xlarge - 64cpu 256G',
+        'r7a.16xlarge - 64cpu 512G',
+
+        'c7a.32xlarge - 128cpu 256G',
+        'm7a.32xlarge - 128cpu 512G',
+        'r7a.32xlarge - 128cpu 1024G',
+
+        'c7a.48xlarge - 192cpu 384G',
+        'm7a.48xlarge - 192cpu 768G',
+        'r7a.48xlarge - 192cpu 1536G',
         ],
 
     'gpu': [
