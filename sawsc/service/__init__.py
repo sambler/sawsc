@@ -45,7 +45,6 @@ class ListBase(ttk.Frame):
             c.destroy()
 
     def copy_to_clip(self, txt):
-        print('copy: ' + txt)
         self.master.master.master.clipboard_clear()
         self.master.master.master.clipboard_append(txt)
         self.master.master.master.update()
