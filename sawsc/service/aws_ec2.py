@@ -91,29 +91,29 @@ TYPE_CHOICES = {
         't3a.medium - 2cpu 4G',
         't3a.large - 2cpu 8G',
 
-        'c7a.2xlarge - 8cpu 16G',
-        'm7a.2xlarge - 8cpu 32G',
-        'r7a.2xlarge - 8cpu 64G',
+        'c6a.2xlarge - 8cpu 16G',
+        'm6a.2xlarge - 8cpu 32G',
+        'r6a.2xlarge - 8cpu 64G',
 
-        'c7a.4xlarge - 16cpu 32G',
-        'm7a.4xlarge - 16cpu 64G',
-        'r7a.4xlarge - 16cpu 128G',
+        'c6a.4xlarge - 16cpu 32G',
+        'm6a.4xlarge - 16cpu 64G',
+        'r6a.4xlarge - 16cpu 128G',
 
-        'c7a.8xlarge - 32cpu 64G',
-        'm7a.8xlarge - 32cpu 128G',
-        'r7a.8xlarge - 32cpu 256G',
+        'c6a.8xlarge - 32cpu 64G',
+        'm6a.8xlarge - 32cpu 128G',
+        'r6a.8xlarge - 32cpu 256G',
 
-        'c7a.16xlarge - 64cpu 128G',
-        'm7a.16xlarge - 64cpu 256G',
-        'r7a.16xlarge - 64cpu 512G',
+        'c6a.16xlarge - 64cpu 128G',
+        'm6a.16xlarge - 64cpu 256G',
+        'r6a.16xlarge - 64cpu 512G',
 
-        'c7a.32xlarge - 128cpu 256G',
-        'm7a.32xlarge - 128cpu 512G',
-        'r7a.32xlarge - 128cpu 1024G',
+        'c6a.32xlarge - 128cpu 256G',
+        'm6a.32xlarge - 128cpu 512G',
+        'r6a.32xlarge - 128cpu 1024G',
 
-        'c7a.48xlarge - 192cpu 384G',
-        'm7a.48xlarge - 192cpu 768G',
-        'r7a.48xlarge - 192cpu 1536G',
+        'c6a.48xlarge - 192cpu 384G',
+        'm6a.48xlarge - 192cpu 768G',
+        'r6a.48xlarge - 192cpu 1536G',
         ],
 
     'gpu': [
