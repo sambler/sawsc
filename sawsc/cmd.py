@@ -217,10 +217,13 @@ def main():
             print('No running instances.')
             exit(5)
         list_instances(running_instances)
-        try:
-            choice = int(input('ssh to: '))
-        except:
-            choice = 0
+        if len(running_instances) == 1:
+            choice = list(running_instances.keys())[0]
+        else:
+            try:
+                choice = int(input('ssh to: '))
+            except:
+                choice = 0
         if choice > 0 and choice in running_instances:
             if running_instances[choice]['state'] == States.RUNNING:
                 print(f'''Connecting to {running_instances[choice]['name']}...''')
