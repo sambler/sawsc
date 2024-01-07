@@ -216,10 +216,10 @@ def main():
         if run_count < 1:
             print('No running instances.')
             exit(5)
-        list_instances(running_instances)
         if len(running_instances) == 1:
             choice = list(running_instances.keys())[0]
         else:
+            list_instances(running_instances)
             try:
                 choice = int(input('ssh to: '))
             except:
