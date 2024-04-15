@@ -133,12 +133,17 @@ class SawscPrefs(tk.Toplevel):
         lbl.grid(row=60, column=0, padx=3, sticky=tk.E)
         b = ttk.Button(self, text='+', bootstyle='success-outline', command=self.add_key)
         b.grid(row=60, column=1, sticky=tk.W, ipadx=0, ipady=0)
-        self.key_tbl = Tableview(self, coldata=['Instance ID', 'Key path'],
-                            rowdata=[[k,v] for k,v in App.opts.known_keys.items()],
+        self.key_tbl = Tableview(self, coldata=['Instance ID', 'User', 'Key path'],
+                            rowdata=[[k,v[0], v[1]] for k,v in App.opts.known_keys.items()],
                             stripecolor=('#403f44', None))
         self.key_tbl.grid(row=61, column=0, columnspan=2, sticky=tk.NSEW, padx=PADDING, pady=PADDING)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(61, weight=1)
+
+        self.geom = tk.StringVar()
+        lbl = ttk.Label(self, textvariable=self.geom)
+        lbl.grid(row=900, column=0, sticky=tk.W, padx=PADDING)
+        lbl.bind('<Button>', self.show_geom)
 
         b = ttk.Button(self, text='Save', bootstyle='success', command=self.save)
         b.grid(row=900, column=1, sticky=tk.SE, padx=PADDING*2, pady=PADDING)
@@ -160,17 +165,25 @@ class SawscPrefs(tk.Toplevel):
         e = ttk.Entry(w, textvariable=inst_entry)
         e.grid(row=0, column=1, sticky=tk.EW, padx=PADDING)
 
-        l = ttk.Label(w, text='Key file path:')
+        l = ttk.Label(w, text='Login username:')
         l.grid(row=1, column=0, sticky=tk.E, padx=PADDING)
-        key_entry = tk.StringVar()
-        e = ttk.Entry(w, textvariable=key_entry)
+        user_entry = tk.StringVar()
+        user_entry.set('ec2-user')
+        e = ttk.Entry(w, textvariable=user_entry)
         e.grid(row=1, column=1, sticky=tk.EW, padx=PADDING)
 
+        l = ttk.Label(w, text='Key file path:')
+        l.grid(row=2, column=0, sticky=tk.E, padx=PADDING)
+        key_entry = tk.StringVar()
+        e = ttk.Entry(w, textvariable=key_entry)
+        e.grid(row=2, column=1, sticky=tk.EW, padx=PADDING)
+
         def save_key():
-            App.opts.known_keys[inst_entry.get()] = key_entry.get()
+            App.opts.known_keys[inst_entry.get()] = [user_entry.get(), key_entry.get()]
             App.opts.save()
             self.key_tbl.delete_rows()
-            self.key_tbl.insert_rows('end', [[k,v] for k,v in App.opts.known_keys.items()])
+            #self.key_tbl.insert_rows('end', [[k,v] for k,v in App.opts.known_keys.items()])
+            self.key_tbl.insert_rows('end', [[k,v[0], v[1]] for k,v in App.opts.known_keys.items()],)
             self.key_tbl.reset_table()
             w.destroy()
 

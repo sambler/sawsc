@@ -418,14 +418,16 @@ class ListFrame(ListBase):
         scp -6 -o IdentitiesOnly=yes -i key_path ec2-user@\[xxxx\]:Downs/file ./
         '''
         key_path = ''
+        username = 'ec2-user'
         if inst_id in Opts.known_keys:
-            key_path = f'-i {Opts.known_keys[inst_id]}'
+            username = Opts.known_keys[inst_id][0]
+            key_path = f'-i {Opts.known_keys[inst_id][1]}'
         if self.instance_ips[inst_id]['ipv6'] != '':
-            ssh_cmd = f'''ssh -t -6 -o IdentitiesOnly=yes {key_path} ec2-user@{self.instance_ips[inst_id]['ipv6']}''' #+ ';exec ${SHELL} ' # to keep term open
+            ssh_cmd = f'''ssh -t -6 -o IdentitiesOnly=yes {key_path} {username}@{self.instance_ips[inst_id]['ipv6']}''' #+ ';exec ${SHELL} ' # to keep term open
         elif self.instance_ips[inst_id]['dns'] != '':
-            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['dns']
+            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} {username}@'+self.instance_ips[inst_id]['dns']
         elif self.instance_ips[inst_id]['ipv4'] != '':
-            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} ec2-user@'+self.instance_ips[inst_id]['ipv4']
+            ssh_cmd = f'ssh -t -o IdentitiesOnly=yes {key_path} {username}@'+self.instance_ips[inst_id]['ipv4']
         else:
             mb.ok('Unable to ssh without an ip address', title='No IP Address', parent=btn)
             return

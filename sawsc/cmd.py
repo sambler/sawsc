@@ -235,8 +235,10 @@ def main():
                     keyfile = args.key
                 else:
                     if running_instances[choice]['id'] in Opts.known_keys:
-                        keyfile = Opts.known_keys[running_instances[choice]['id']]
+                        username = Opts.known_keys[running_instances[choice]['id']][0]
+                        keyfile = Opts.known_keys[running_instances[choice]['id']][1]
                     else:
+                        username = 'ec2-user'
                         keyfile = '~/.ssh/aws_bb_sydney'
                 cmd = ''
                 if Opts.run_tmux:
@@ -245,7 +247,7 @@ def main():
                     sh_args = ['ssh', '-6', '-t',
                                 '-i', keyfile,
                                 '-o ', 'IdentitiesOnly=yes',
-                                'ec2-user@'+running_instances[choice]['ipv6'][0],
+                                f'{username}@'+running_instances[choice]['ipv6'][0],
                                 cmd]
                     if args.debug:
                         sh_args.insert(1, '-vvv')
@@ -253,7 +255,7 @@ def main():
                     sh_args = ['ssh', '-t',
                                 '-i', keyfile,
                                 '-o ', 'IdentitiesOnly=yes',
-                                'ec2-user@'+running_instances[choice]['dnsname'],
+                                f'{username}@'+running_instances[choice]['dnsname'],
                                 cmd]
                 #pp(sargs)
                 sp.call(' '.join(sh_args), shell=True)

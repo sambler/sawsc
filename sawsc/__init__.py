@@ -94,7 +94,7 @@ class CLIOptions:
                             },
                 'Accounts': {'aws_customer_id': '123465',},
                 'Options': {'terminal': 'xterm',},
-                'SSH_keys': {}, # as - inst_id: key_path
+                'SSH_keys': {}, # as - inst_id: [user, key_path]
                 }
 
     def save(self):
