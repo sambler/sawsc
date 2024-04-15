@@ -268,7 +268,7 @@ class SawscEC2Types(tk.Toplevel):
     def __init__(self):
         super().__init__()
         self.title('AWS EC2 Types')
-        self.geometry('900x605')
+        self.geometry('1080x605')
         self.protocol("WM_DELETE_WINDOW", self.close_window)
         self.bind('<F5>', self.refresh)
         self.options = ttk.Frame(self)
