@@ -50,6 +50,7 @@ class ListBase(ttk.Frame):
         self.master.master.master.update()
 
     def tag_name(self, inst):
+        if 'Tags' not in inst: return ''
         return [t['Value'] for t in inst['Tags'] if t['Key'] == 'Name'][0]
 
     def refresh(self):
