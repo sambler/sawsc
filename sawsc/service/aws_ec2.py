@@ -156,6 +156,8 @@ class ListFrame(ListBase):
                                 command=lambda tx=nt: self.copy_to_clip(tx))
                     l.grid(row=0, column=0, sticky=tk.W, padx=PADDING)
                     tt = ToolTip(l, text='Name tag of EC2 instance')
+                    # right click to edit name tag
+                    l.bind('<Button-3>', lambda evnt, iid=i['InstanceId'], iname=nt: self.change_name(evnt, iid, iname))
 
                     # inst id
                     l = ttk.Button(item, text=i['InstanceId'], bootstyle='link',
@@ -320,6 +322,33 @@ class ListFrame(ListBase):
                 response = ec2.describe_instances(NextToken=response['NextToken'])
             else:
                 break
+
+    def change_name(self, evnt, inst_id, inst_name):
+        w = tk.Toplevel(self)
+        w.title(f'{inst_id} name change')
+        w.minsize(350, 80)
+        w.resizable(1,0)
+
+        l = ttk.Label(w, text='Name:')
+        l.grid(row=0, column=0, sticky=tk.W, padx=PADDING)
+
+        name_change = tk.StringVar(value=inst_name)
+        e = ttk.Entry(w, textvariable=name_change)
+        e.grid(row=1, column=0, columnspan=2, sticky=tk.EW, padx=PADDING*2)
+
+        def do_change():
+            print(f'Change {inst_id} name tag to {name_change.get()}')
+            try:
+                ec2.create_tags(Resources=[inst_id], Tags=[{'Key': 'Name', 'Value': name_change.get()}])
+            except Exception as e:
+                print(e)
+            w.destroy()
+            self.after(5000, self.refresh())
+
+        b = ttk.Button(w, text='Change', command=do_change)
+        b.grid(row=99, column=1, sticky=tk.W, padx=PADDING*3, pady=PADDING)
+
+        w.columnconfigure(0, weight=1)
 
     def change_state(self, inst_id, inst_state, inst_name):
         w = tk.Toplevel(self)
