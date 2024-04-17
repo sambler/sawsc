@@ -91,6 +91,8 @@ TYPE_CHOICES = {
         't3a.medium - 2cpu 4G',
         't3a.large - 2cpu 8G',
 
+        't3a.xlarge - 4cpu 16G',
+
         'c6a.2xlarge - 8cpu 16G',
         'm6a.2xlarge - 8cpu 32G',
         'r6a.2xlarge - 8cpu 64G',
