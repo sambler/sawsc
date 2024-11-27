@@ -125,20 +125,25 @@ class SawscPrefs(tk.Toplevel):
         cb.grid(row=50, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Start tmux with SSH:')
-        lbl.grid(row=55, column=0, padx=3, sticky=tk.E)
+        lbl.grid(row=60, column=0, padx=3, sticky=tk.E)
         cb = ttk.Checkbutton(self, variable=App.opts._run_tmux)
-        cb.grid(row=55, column=1, sticky=tk.W)
+        cb.grid(row=60, column=1, sticky=tk.W)
+
+        lbl = ttk.Label(self, text='Use IPv6 for ssh:')
+        lbl.grid(row=70, column=0, padx=3, sticky=tk.E)
+        cb = ttk.Checkbutton(self, variable=App.opts._use_ipv6)
+        cb.grid(row=70, column=1, sticky=tk.W)
 
         lbl = ttk.Label(self, text='Instance SSH keys:')
-        lbl.grid(row=60, column=0, padx=3, sticky=tk.E)
+        lbl.grid(row=90, column=0, padx=3, sticky=tk.E)
         b = ttk.Button(self, text='+', bootstyle='success-outline', command=self.add_key)
-        b.grid(row=60, column=1, sticky=tk.W, ipadx=0, ipady=0)
+        b.grid(row=90, column=1, sticky=tk.W, ipadx=0, ipady=0)
         self.key_tbl = Tableview(self, coldata=['Instance ID', 'User', 'Key path'],
                             rowdata=[[k,v[0], v[1]] for k,v in App.opts.known_keys.items()],
                             stripecolor=('#403f44', None))
-        self.key_tbl.grid(row=61, column=0, columnspan=2, sticky=tk.NSEW, padx=PADDING, pady=PADDING)
+        self.key_tbl.grid(row=91, column=0, columnspan=2, sticky=tk.NSEW, padx=PADDING, pady=PADDING)
         self.columnconfigure(1, weight=1)
-        self.rowconfigure(61, weight=1)
+        self.rowconfigure(91, weight=1)
 
         self.geom = tk.StringVar()
         lbl = ttk.Label(self, textvariable=self.geom)

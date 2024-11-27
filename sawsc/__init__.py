@@ -148,6 +148,8 @@ class GUIOptions(CLIOptions):
         self._run_tmux.set(True)
         self._aws_customer_id = tk.StringVar()
         self._terminal = tk.StringVar()
+        self._use_ipv6 = tk.BooleanVar()
+        self._use_ipv6.set(True)
         self.known_keys = {}
 
     @property

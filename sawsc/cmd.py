@@ -81,6 +81,7 @@ def main():
     parser.add_argument('-r', '--run', help='start an instance', action='store_true')
     parser.add_argument('-f', '--force', help='force reboot an instance', action='store_true')
     parser.add_argument('-s', '--ssh', help='ssh into an instance', action='store_true')
+    parser.add_argument('-4', '--ipv4', help='use ipv4 for ssh', action='store_true')
     parser.add_argument('-c', '--change', help='chnage instance type', action='store_true')
     parser.add_argument('-k', '--key', help='ssh key file', type=str, default='')
     parser.add_argument('ids', metavar='Id', type=str, nargs='*', help='Instance Id/s to start')
@@ -243,6 +244,8 @@ def main():
                 cmd = ''
                 if Opts.run_tmux:
                     cmd = 'tmux'
+                if args.ipv4:
+                    running_instances[choice]['ipv6'] = []
                 if len(running_instances[choice]['ipv6']):
                     sh_args = ['ssh', '-6', '-t',
                                 '-i', keyfile,
