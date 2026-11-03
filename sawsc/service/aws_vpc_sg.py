@@ -33,7 +33,7 @@
 import boto3
 import tkinter as tk
 import ttkbootstrap as ttk
-from ttkbootstrap.tooltip import ToolTip
+from ttkbootstrap import ToolTip
 
 from . import ListBase
 

@@ -35,7 +35,7 @@ import subprocess as sp
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.dialogs import Messagebox as mb
-from ttkbootstrap.tooltip import ToolTip
+from ttkbootstrap import ToolTip
 
 from . import ListBase
 

@@ -39,9 +39,9 @@ import sys
 import threading as thr
 import tkinter as tk
 import ttkbootstrap as ttk
-from ttkbootstrap.dialogs import Messagebox as mb
-from ttkbootstrap.scrolled import ScrolledFrame
-from ttkbootstrap.tableview import Tableview
+from ttkbootstrap import Messagebox as mb
+from ttkbootstrap import ScrolledFrame
+from ttkbootstrap import Tableview
 
 from . import hs, GUIOptions
 from .__version__ import __version__ as vers
