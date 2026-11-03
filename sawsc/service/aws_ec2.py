@@ -55,67 +55,82 @@ class States:
 # only a personal selection here
 TYPE_CHOICES = {
     'arm': [
-        'c7g.medium - 1cpu arm 2G',
-        'm7g.medium - 1cpu arm 4G',
-        'r7g.medium - 1cpu arm 8G',
+        'c8g.medium - 1cpu arm 2G',         # $0.0519
+        'm8g.medium - 1cpu arm 4G',         # $0.0561
+        'r8g.medium - 1cpu arm 8G',         # $0.0706
 
-        'c7g.large - 2cpu arm 4G',
-        'm7g.large - 2cpu arm 8G',
-        'r7g.large - 2cpu arm 16G',
+        'c8g.large - 2cpu arm 4G',          # $0.1038
+        'm8g.large - 2cpu arm 8G',          # $0.1122
+        'r8g.large - 2cpu arm 16G',         # $0.1412
 
-        'c7g.xlarge - 4cpu arm 8G',
-        'm7g.xlarge - 4cpu arm 16G',
-        'r7g.xlarge - 4cpu arm 32G',
+        'c8g.xlarge - 4cpu arm 8G',         # $0.2076
+        'm8g.xlarge - 4cpu arm 16G',        # $0.2244
+        'r8g.xlarge - 4cpu arm 32G',        # $0.2824
 
-        'c7g.2xlarge - 8cpu arm 16G',
-        'm7g.2xlarge - 8cpu arm 32G',
-        'r7g.2xlarge - 8cpu arm 64G',
+        'c8g.2xlarge - 8cpu arm 16G',       # $0.4152
+        'm8g.2xlarge - 8cpu arm 32G',       # $0.4488
+        'r8g.2xlarge - 8cpu arm 64G',       # $0.5648
 
-        'c7g.4xlarge - 16cpu arm 32G',
-        'm7g.4xlarge - 16cpu arm 64G',
-        'r7g.4xlarge - 16cpu arm 128G',
+        'c8g.4xlarge - 16cpu arm 32G',      # $0.8304
+        'm8g.4xlarge - 16cpu arm 64G',      # $0.8976
+        'r8g.4xlarge - 16cpu arm 128G',     # $1.1296
 
-        'c7g.8xlarge - 32cpu arm 64G',
-        'm7g.8xlarge - 32cpu arm 128G',
-        'r7g.8xlarge - 32cpu arm 256G',
+        'c8g.8xlarge - 32cpu arm 64G',      # $1.6608
+        'm8g.8xlarge - 32cpu arm 128G',     # $1.7952
+        'r8g.8xlarge - 32cpu arm 256G',     # $2.2592
 
-        'c7g.16xlarge - 64cpu arm 128G',
-        'm7g.16xlarge - 64cpu arm 256G',
-        'r7g.16xlarge - 64cpu arm 512G',
+        'c8g.16xlarge - 64cpu arm 128G',    # $3.3216
+        'm8g.16xlarge - 64cpu arm 256G',    # $3.5904
+        'r8g.16xlarge - 64cpu arm 512G',    # $4.5184
+
+        'c8g.48xlarge - 192cpu arm 384G',   # $9.9648
+        'm8g.48xlarge - 192cpu arm 768G',   # $10.7712
+        'r8g.48xlarge - 192cpu arm 1536G',  # $13.5552
         ],
 
     'x86': [
-        't3a.nano - 2cpu 0.5G',
-        't3a.micro - 2cpu 1G',
-        't3a.small - 2cpu 2G',
-        't3a.medium - 2cpu 4G',
-        't3a.large - 2cpu 8G',
+        # 't3a.nano - 2cpu 0.5G',             # $0.0059
+        # 't3a.micro - 2cpu 1G',              # $0.0119
+        # 't3a.small - 2cpu 2G',              # $0.0238
+        # 't3a.medium - 2cpu 4G',             # $0.0475
+        # 't3a.large - 2cpu 8G',              # $0.095
 
-        't3a.xlarge - 4cpu 16G',
+        # 't3a.xlarge - 4cpu 16G',            # $0.1901
+        
+        'c6a.large - 2cpu - 4G',            # $0.0999
+        'c8i.large - 2cpu - 4G',            # $0.12238
+        'c6a.xlarge - 4cpu - 8G',           # $0.1998
+        'c8i.xlarge - 4cpu - 8G',           # $0.24476
 
-        'c6a.2xlarge - 8cpu 16G',
-        'm6a.2xlarge - 8cpu 32G',
-        'r6a.2xlarge - 8cpu 64G',
+        'c6a.2xlarge - 8cpu 16G',           # $0.3996
+        # 'm6a.2xlarge - 8cpu 32G',           # $0.432
+        # 'r6a.2xlarge - 8cpu 64G',           # $0.5436
+        'c8i.2xlarge - 8cpu 16G',           # $0.48952
 
-        'c6a.4xlarge - 16cpu 32G',
-        'm6a.4xlarge - 16cpu 64G',
-        'r6a.4xlarge - 16cpu 128G',
+        'c6a.4xlarge - 16cpu 32G',          # $0.7992
+        # 'm6a.4xlarge - 16cpu 64G',          # $0.864
+        # 'r6a.4xlarge - 16cpu 128G',         # $1.0872
+        'c8i.4xlarge - 16cpu 32G',          # $1.42128
 
-        'c6a.8xlarge - 32cpu 64G',
-        'm6a.8xlarge - 32cpu 128G',
-        'r6a.8xlarge - 32cpu 256G',
+        'c6a.8xlarge - 32cpu 64G',          # $1.5984
+        # 'm6a.8xlarge - 32cpu 128G',         # $1.728
+        # 'r6a.8xlarge - 32cpu 256G',         # $2.1744
+        'c8i.8xlarge - 32cpu 64G',          # $1.95808
 
-        'c6a.16xlarge - 64cpu 128G',
-        'm6a.16xlarge - 64cpu 256G',
-        'r6a.16xlarge - 64cpu 512G',
+        'c6a.16xlarge - 64cpu 128G',        # $3.1968
+        # 'm6a.16xlarge - 64cpu 256G',        # $3.456
+        # 'r6a.16xlarge - 64cpu 512G',        # $4.3488
+        'c8i.16xlarge - 64cpu 128G',        # $3.91616
 
-        'c6a.32xlarge - 128cpu 256G',
-        'm6a.32xlarge - 128cpu 512G',
-        'r6a.32xlarge - 128cpu 1024G',
+        'c6a.32xlarge - 128cpu 256G',       # $6.3936
+        # 'm6a.32xlarge - 128cpu 512G',       # $6.912
+        # 'r6a.32xlarge - 128cpu 1024G',      # $8.6976
+        'c8i.32xlarge - 128cpu 256G',       # $7.83232
 
-        'c6a.48xlarge - 192cpu 384G',
-        'm6a.48xlarge - 192cpu 768G',
-        'r6a.48xlarge - 192cpu 1536G',
+        # 'c6a.48xlarge - 192cpu 384G',       # $9.5904
+        # 'm6a.48xlarge - 192cpu 768G',       # $10.368
+        # 'r6a.48xlarge - 192cpu 1536G',      # $13.0464
+        # 'c8i.48xlarge - 192cpu 384G',       # $11.74848
         ],
 
     'gpu': [
