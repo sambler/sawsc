@@ -60,7 +60,7 @@ service = {s[:-3]: import_module('sawsc.service.'+s[:-3]) for
 class tspinner(ttk.Label):
     def __init__(self, par, **kwargs):
         super().__init__(par, **kwargs)
-        self.frames = '-\|/'
+        self.frames = r'-\|/'
         self.running = False
         self.pos = 0
         self.active_cons = 0
